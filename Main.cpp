@@ -81,14 +81,24 @@ SDL_Renderer * renderer;
 SDL_Window * window;
 
 TTF_Font* font;
+
 SDL_Texture* solidTexture;
 SDL_Texture* blendedTexture;
 SDL_Texture* shadedTexture;
+SDL_Rect solidRect;
+SDL_Rect blendedRect;
+SDL_Rect shadedRect;
+
 SDL_Surface* surfaceMessage;
 SDL_Texture* Message;
 SDL_Rect Message_rect;
 TTF_Font* Sans;
 int w,h;
+
+bool SetupTTF( const std::string &fontName, int fontSize );
+SDL_Texture* SurfaceToTexture( SDL_Surface* surf );
+void CreateTextTextures(std::string inText, int inX, int inY);
+
 
 // Init and Shutdown functions //
 void Init();
@@ -103,7 +113,6 @@ void GameLost();
 
 // Helper functions for the main game state functions //
 void DrawBackground();
-void DisplayText(string text, int x, int y, int size, uint8_t fR, uint8_t fG, uint8_t fB, uint8_t bR, uint8_t bG, uint8_t bB);
 
 void HandleMenuInput();
 void HandleGameInput();
@@ -193,6 +202,7 @@ int main(int argc, char **argv)
     StateStruct state(time_span.count(),str);
 
     //std::cout << str << std::endl;
+    SetupTTF( "./assets/fonts/RPGSystem.ttf", 24 );
 
 	while(quit)
 	{
@@ -353,8 +363,7 @@ void Init()
 	g_StateStack.push(state);
 
 	// Initialize the true type font library //
-	TTF_Init();
-	Sans = TTF_OpenFont("./assets/fonts/ARIAL.TTF", 12); //this opens a font style and sets a size
+	//SetupTTF("./assets/fonts/replay.ttf");
     std::cout << TTF_GetError() << std::endl;
 }
 
@@ -437,8 +446,9 @@ void Menu()
 		// copy the texture to the rendering context
 		SDL_RenderCopy(renderer, img, NULL, &texr);
 
-        DisplayText("Start (G)ame", 120, 120, 12, 255, 255, 255, 0, 0, 0);
-        DisplayText("(Q)uit game", 120, 150, 12, 255, 255, 255, 0, 0, 0);
+        CreateTextTextures("Start (G)ame",100,120);
+		CreateTextTextures("(Q)uit game",100,150);
+		CreateTextTextures("(O)ptions",100,180);
 
 		g_Timer = SDL_GetTicks();
 	}
@@ -532,62 +542,9 @@ void Game()
 		string level = "Level: ";
 		level.append( std::to_string(g_Level) );
 
-        surfaceMessage = TTF_RenderText_Shaded(Sans, nextscore.c_str(), foreground, background);
-
-        Message = SDL_CreateTextureFromSurface(renderer, surfaceMessage); //now you can convert it into a texture
-
-        if(TTF_SizeText(Sans,nextscore.c_str(),&w,&h))
-        {
-        }
-        else
-        {
-            Message_rect.x = NEEDED_SCORE_RECT_X;  //controls the rect's x coordinate
-            Message_rect.y = NEEDED_SCORE_RECT_Y; // controls the rect's y coordinte
-            Message_rect.w = w; // controls the width of the rect
-            Message_rect.h = h; // controls the height of the rect
-        }
-
-        SDL_RenderCopy(renderer, Message, NULL, &Message_rect); //you put the renderer's name first, the Message, the crop size(you can ignore this if you don't want to dabble with cropping), and the rect which is the size and coordinate of your texture
-
-        surfaceMessage = TTF_RenderText_Shaded(Sans, score.c_str(), foreground, background);
-
-        Message = SDL_CreateTextureFromSurface(renderer, surfaceMessage); //now you can convert it into a texture
-
-
-        if(TTF_SizeText(Sans,score.c_str(),&w,&h))
-        {
-        }
-        else
-        {
-            Message_rect.x = SCORE_RECT_X;  //controls the rect's x coordinate
-            Message_rect.y = SCORE_RECT_Y; // controls the rect's y coordinte
-            Message_rect.w = w; // controls the width of the rect
-            Message_rect.h = h; // controls the height of the rect
-        }
-
-        SDL_RenderCopy(renderer, Message, NULL, &Message_rect); //you put the renderer's name first, the Message, the crop size(you can ignore this if you don't want to dabble with cropping), and the rect which is the size and coordinate of your texture
-
-        surfaceMessage = TTF_RenderText_Shaded(Sans, level.c_str(), foreground, background);
-
-        Message = SDL_CreateTextureFromSurface(renderer, surfaceMessage); //now you can convert it into a texture
-
-
-        if(TTF_SizeText(Sans,level.c_str(),&w,&h))
-        {
-        }
-        else
-        {
-            Message_rect.x = LEVEL_RECT_X;  //controls the rect's x coordinate
-            Message_rect.y = LEVEL_RECT_Y; // controls the rect's y coordinte
-            Message_rect.w = w; // controls the width of the rect
-            Message_rect.h = h; // controls the height of the rect
-        }
-
-        SDL_RenderCopy(renderer, Message, NULL, &Message_rect); //you put the renderer's name first, the Message, the crop size(you can ignore this if you don't want to dabble with cropping), and the rect which is the size and coordinate of your texture
-
-        //SDL_DestroyTexture(img);
-
-		//SDL_RenderPresent(renderer);
+		CreateTextTextures(nextscore.c_str(),NEEDED_SCORE_RECT_X,NEEDED_SCORE_RECT_Y);
+		CreateTextTextures(score.c_str(),SCORE_RECT_X,SCORE_RECT_Y);
+		CreateTextTextures(level.c_str(),LEVEL_RECT_X,LEVEL_RECT_Y);
 
 		g_Timer = SDL_GetTicks();
 	}
@@ -606,7 +563,7 @@ void Exit()
 
         //ClearScreen(renderer);
 
-         DisplayText("(Q)uit Game (Y or N)", 120, 150, 12, 255, 255, 255, 0, 0, 0);
+        CreateTextTextures("(Q)uit Game (Y or N)",100,150);
 
 		g_Timer = SDL_GetTicks();
 	}
@@ -621,8 +578,8 @@ void GameWon()
 
 		//ClearScreen(renderer);
 
-		DisplayText("You Win!!!", 100, 120, 12, 255, 255, 255, 0, 0, 0);
-		DisplayText("(Q)uit Game (Y or N)", 100, 140, 12, 255, 255, 255, 0, 0, 0);
+		CreateTextTextures("You Win!!!",100,120);
+		CreateTextTextures("(Q)uit Game (Y or N)",100,150);
 
 		g_Timer = SDL_GetTicks();
 	}
@@ -650,8 +607,8 @@ void GameLost()
 		// copy the texture to the rendering context
 		SDL_RenderCopy(renderer, img, NULL, &texr);
 
-        DisplayText("You Lose.", 100, 120, 12, 255, 255, 255, 0, 0, 0);
-        DisplayText("Quit Game (Y or N)?", 100, 140, 12, 255, 255, 255, 0, 0, 0);
+		CreateTextTextures("You Lose.",100,120);
+		CreateTextTextures("(Q)uit Game (Y or N)",100,150);
 
         static int runonce = 0;
         if(runonce == 0)
@@ -702,39 +659,6 @@ void DrawBackground()
 	}
 
 	//SDL_Rect destination = { 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT };
-}
-
-// This function displays text to the screen. It takes the text //
-// to be displayed, the location to display it, the size of the //
-// text, and the color of the text and background.              //
-void DisplayText(string text, int x, int y, int size, uint8_t fR, uint8_t fG, uint8_t fB, uint8_t bR, uint8_t bG, uint8_t bB)
-{
-	// Open our font and set its size to the given parameter //
-    TTF_Font* font = TTF_OpenFont("arial.ttf", size);
-
-	SDL_Color foreground  = { fR, fG, fB};   // text color
-	SDL_Color background  = { bR, bG, bB };  // color of what's behind the text
-
-    surfaceMessage = TTF_RenderText_Shaded(Sans, text.c_str(), foreground, background);
-
-    Message = SDL_CreateTextureFromSurface(renderer, surfaceMessage); //now you can convert it into a texture
-
-
-    if(TTF_SizeText(Sans,text.c_str(),&w,&h))
-    {
-    }
-    else
-    {
-        Message_rect.x = x;  //controls the rect's x coordinate
-        Message_rect.y = y; // controls the rect's y coordinte
-        Message_rect.w = w; // controls the width of the rect
-        Message_rect.h = h; // controls the height of the rect
-    }
-
-    SDL_RenderCopy(renderer, Message, NULL, &Message_rect); //you put the renderer's name first, the Message, the crop size(you can ignore this if you don't want to dabble with cropping), and the rect which is the size and coordinate of your texture
-
-	// Close the font. //
-	TTF_CloseFont(font);
 }
 
 // This function receives player input and //
@@ -1382,4 +1306,64 @@ void Debugger()
     std::cout << "g_Level: " << g_Level << std::endl;
     std::cout << "g_Score: " << g_Score << std::endl;
 
+}
+
+bool SetupTTF( const std::string &fontName, int fontSize)
+{
+    // SDL2_TTF needs to be initialized just like SDL2
+    if ( TTF_Init() == -1 )
+    {
+        std::cout << " Failed to initialize TTF : " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    // Load our fonts, with a huge size
+    font = TTF_OpenFont( fontName.c_str(), fontSize );
+
+    // Error check
+    if ( font == nullptr )
+    {
+        std::cout << " Failed to load font : " << SDL_GetError() << std::endl;
+        return false;
+    }
+    return true;
+}
+
+void CreateTextTextures(std::string inText, int inX, int inY)
+{
+    SDL_Color textColor  = { 255, 255, 255};   // text color
+    SDL_Color backgroundColor  = { 0, 0, 0};   // text color
+    SDL_Surface* solid = TTF_RenderText_Solid( font, inText.c_str(), textColor );
+    solidTexture = SurfaceToTexture( solid );
+
+    SDL_QueryTexture( solidTexture, NULL, NULL, &solidRect.w, &solidRect.h );
+    solidRect.x = inX;
+    solidRect.y = inY;
+
+    SDL_Surface* blended = TTF_RenderText_Blended( font, inText.c_str(), textColor );
+    blendedTexture = SurfaceToTexture( blended );
+
+    SDL_QueryTexture( blendedTexture, NULL, NULL, &blendedRect.w, &blendedRect.h );
+    blendedRect.x = 0;
+    blendedRect.y = solidRect.y + solidRect.h +  20;
+
+    SDL_Surface* shaded = TTF_RenderText_Shaded( font, inText.c_str(), textColor, backgroundColor );
+    shadedTexture = SurfaceToTexture( shaded );
+
+    SDL_QueryTexture( shadedTexture , NULL, NULL, &shadedRect.w, &shadedRect.h );
+    shadedRect.x = 0;
+    shadedRect.y = blendedRect.y + blendedRect.h + 20;
+
+    SDL_RenderCopy( renderer, solidTexture, nullptr, &solidRect );
+    //SDL_RenderCopy( renderer, blendedTexture, nullptr, &blendedRect );
+    //SDL_RenderCopy( renderer, shadedTexture, nullptr, &shadedRect );
+}
+
+// Convert an SDL_Surface to SDL_Texture.
+SDL_Texture* SurfaceToTexture( SDL_Surface* surf )
+{
+    SDL_Texture* text;
+    text = SDL_CreateTextureFromSurface( renderer, surf );
+    SDL_FreeSurface( surf );
+    return text;
 }
