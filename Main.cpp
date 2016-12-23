@@ -110,6 +110,7 @@ void Game();
 void Exit();
 void GameWon();
 void GameLost();
+void Option();
 
 // Helper functions for the main game state functions //
 void DrawBackground();
@@ -118,6 +119,7 @@ void HandleMenuInput();
 void HandleGameInput();
 void HandleExitInput();
 void HandleWinLoseInput();
+void HandleOptionInput();
 
 bool CheckEntityCollisions(cSquare* square, Direction dir);
 bool CheckWallCollisions(cSquare* square, Direction dir);
@@ -704,6 +706,13 @@ void HandleMenuInput()
 				g_StateStack.push(temp);
 				return;  // this state is done, exit the function
 			}
+			if (g_Event.key.keysym.sym == SDLK_o)
+			{
+				StateStruct temp;
+				temp.StatePointer = Option;
+				g_StateStack.push(temp);
+				return;  // this state is done, exit the function
+			}
 		}
 	}
 }
@@ -712,6 +721,73 @@ void HandleMenuInput()
 // handles it for the main game state.     //
 void HandleGameInput()
 {
+
+    const Uint8* keystates = SDL_GetKeyboardState(NULL);
+    if(keystates[SDL_SCANCODE_LEFT])
+	{
+		if ( !CheckWallCollisions(g_FocusBlock, LEFT) &&
+			 !CheckEntityCollisions(g_FocusBlock, LEFT) )
+		{
+			g_FocusBlock->Move(LEFT);
+		}
+        else
+        {
+            if ( Mix_PlayChannel(-1, sfx[10], 0) == -1 )
+            {
+                std::cout << "FAIL OPEN AUDIO" << std::endl;
+            }
+        }
+	}
+    else if(keystates[SDL_SCANCODE_RIGHT])
+	{
+		if ( !CheckWallCollisions(g_FocusBlock, RIGHT) &&
+			 !CheckEntityCollisions(g_FocusBlock, RIGHT) )
+		{
+			g_FocusBlock->Move(RIGHT);
+		}
+		else
+		{
+            if ( Mix_PlayChannel(-1, sfx[10], 0) == -1 )
+            {
+                std::cout << "FAIL OPEN AUDIO" << std::endl;
+            }
+		}
+	}
+    else if(keystates[SDL_SCANCODE_UP])
+    {
+				// Check collisions before rotating //
+				if (!CheckRotationCollisions(g_FocusBlock))
+				{
+					g_FocusBlock->Rotate();
+                    SDL_Delay(50);
+				}
+				else
+				{
+                    if ( Mix_PlayChannel(-1, sfx[10], 0) == -1 )
+                    {
+                        std::cout << "FAIL OPEN AUDIO" << std::endl;
+                    }
+				}
+    }
+    else if(keystates[SDL_SCANCODE_DOWN])
+    {
+		if ( !CheckWallCollisions(g_FocusBlock, DOWN) &&
+			 !CheckEntityCollisions(g_FocusBlock, DOWN) )
+		{
+			g_FocusBlock->Move(DOWN);
+		}
+        else
+        {
+            if ( Mix_PlayChannel(-1, sfx[10], 0) == -1 )
+            {
+                std::cout << "FAIL OPEN AUDIO" << std::endl;
+            }
+        }
+    }
+
+    else if(keystates[SDL_SCANCODE_ESCAPE])
+        g_StateStack.pop();
+
 	// These variables allow the user to hold the arrow keys down //
 	static bool down_pressed  = false;
 	static bool left_pressed  = false;
@@ -726,7 +802,6 @@ void HandleGameInput()
 			// While state stack isn't empty, pop //
 			while (!g_StateStack.empty())
 			{
-                std::cout << "HandleGameInput POP" << std::endl;
 				g_StateStack.pop();
 			}
 
@@ -738,7 +813,7 @@ void HandleGameInput()
 		{
 			if (g_Event.key.keysym.sym == SDLK_ESCAPE)
 			{
-				g_StateStack.pop();
+				//g_StateStack.pop();
 
 				return;  // this state is done, exit the function
 			}
@@ -748,14 +823,10 @@ void HandleGameInput()
 				// Check collisions before rotating //
 				if (!CheckRotationCollisions(g_FocusBlock))
 				{
-					g_FocusBlock->Rotate();
+				//	g_FocusBlock->Rotate();
 				}
 				else
 				{
-                    if ( Mix_PlayChannel(-1, sfx[10], 0) == -1 )
-                    {
-                        std::cout << "FAIL OPEN AUDIO" << std::endl;
-                    }
 				}
 			}
 
@@ -798,14 +869,10 @@ void HandleGameInput()
 		if ( !CheckWallCollisions(g_FocusBlock, DOWN) &&
 			 !CheckEntityCollisions(g_FocusBlock, DOWN) )
 		{
-			g_FocusBlock->Move(DOWN);
+			//g_FocusBlock->Move(DOWN);
 		}
         else
         {
-            if ( Mix_PlayChannel(-1, sfx[10], 0) == -1 )
-            {
-                std::cout << "FAIL OPEN AUDIO" << std::endl;
-            }
         }
 	}
 	if (left_pressed)
@@ -813,14 +880,10 @@ void HandleGameInput()
 		if ( !CheckWallCollisions(g_FocusBlock, LEFT) &&
 			 !CheckEntityCollisions(g_FocusBlock, LEFT) )
 		{
-			g_FocusBlock->Move(LEFT);
+			//g_FocusBlock->Move(LEFT);
 		}
         else
         {
-            if ( Mix_PlayChannel(-1, sfx[10], 0) == -1 )
-            {
-                std::cout << "FAIL OPEN AUDIO" << std::endl;
-            }
         }
 	}
 	if (right_pressed)
@@ -828,14 +891,10 @@ void HandleGameInput()
 		if ( !CheckWallCollisions(g_FocusBlock, RIGHT) &&
 			 !CheckEntityCollisions(g_FocusBlock, RIGHT) )
 		{
-			g_FocusBlock->Move(RIGHT);
+			//g_FocusBlock->Move(RIGHT);
 		}
 		else
 		{
-            if ( Mix_PlayChannel(-1, sfx[10], 0) == -1 )
-            {
-                std::cout << "FAIL OPEN AUDIO" << std::endl;
-            }
 		}
 	}
 }
@@ -990,9 +1049,10 @@ bool CheckEntityCollisions(cBlock* block, Direction dir)
 	for (int i=0; i<4; i++)
 	{
 		if ( CheckEntityCollisions(temp_array[i], dir) )
-			return true;
+		{
+            return true;
+        }
 	}
-
 	return false;
 }
 
@@ -1058,7 +1118,6 @@ bool CheckWallCollisions(cBlock* block, Direction dir)
 		if ( CheckWallCollisions(temp_array[i], dir) )
 			return true;
 	}
-
 	return false;
 }
 
@@ -1366,4 +1425,78 @@ SDL_Texture* SurfaceToTexture( SDL_Surface* surf )
     text = SDL_CreateTextureFromSurface( renderer, surf );
     SDL_FreeSurface( surf );
     return text;
+}
+
+//Volume control type: 1 = SDL (only affects Mupen64Plus output)  2 = OSS
+// mixer (adjusts master PC volume)
+int VOLUME_CONTROL_TYPE = 1;
+// Percentage change each time the volume is increased or decreased
+int VOLUME_ADJUST = 1;
+// Default volume when a game is started.Only used if VOLUME_CONTROL_TYPE is 1
+int VOLUME_DEFAULT = 80;
+
+void HandleOptionInput()
+{
+    const Uint8* keystates = SDL_GetKeyboardState(NULL);
+    if(keystates[SDL_SCANCODE_LEFT])
+         Mix_Volume(-1,Mix_Volume(-1,-1) - VOLUME_ADJUST);
+    else if(keystates[SDL_SCANCODE_RIGHT])
+        Mix_Volume(-1,Mix_Volume(-1,-1) + VOLUME_ADJUST);
+	// Fill our event structure with event information. //
+    else if(keystates[SDL_SCANCODE_Q])
+        g_StateStack.pop();
+    else if(keystates[SDL_SCANCODE_ESCAPE])
+        g_StateStack.pop();
+
+	if ( SDL_PollEvent(&g_Event) )
+	{
+		// Handle user manually closing game window //
+		if (g_Event.type == SDL_QUIT)
+		{
+			// While state stack isn't empty, pop //
+			while (!g_StateStack.empty())
+			{
+				g_StateStack.pop();
+			}
+
+			return;  // game is over, exit the function
+		}
+	}
+}
+
+
+
+void Option()
+{
+	// Here we compare the difference between the current time and the last time we //
+	// handled a frame. If FRAME_RATE amount of time has passed, it's time for a new frame. //
+	if ( (SDL_GetTicks() - g_Timer) >= FRAME_RATE )
+	{
+		// We start by calling our input function
+		HandleOptionInput();
+
+        SDL_Texture *img = NULL;
+        int w, h; // texture width & height
+        img = IMG_LoadTexture(renderer, "./data/FallingBlocks2.bmp");
+
+        if (img == NULL)
+            std::cout << "Couldn't load ./data/FallingBlocks2.bmp" << std::endl;
+
+        SDL_QueryTexture(img, NULL, NULL, &w, &h); // get the width and height of the texture
+        SDL_Rect texr; texr.x = 0; texr.y = 0; texr.w = w; texr.h = h;
+
+		// copy the texture to the rendering context
+		SDL_RenderCopy(renderer, img, NULL, &texr);
+        int Music_Volume = Mix_VolumeMusic(-1);
+        int SFX_Volume = Mix_Volume(-1,-1);
+        CreateTextTextures("SOUND FX VOLUME",60,100);
+        CreateTextTextures(std::to_string(SFX_Volume),60,130);
+		CreateTextTextures("MUSIC VOLUME",60,160);
+		CreateTextTextures(std::to_string(Music_Volume),60,190);
+		CreateTextTextures("SHOW GHOST PIECE",60,220);
+		CreateTextTextures("YES",60,250);
+
+		g_Timer = SDL_GetTicks();
+	}
+	//Debugger();
 }
