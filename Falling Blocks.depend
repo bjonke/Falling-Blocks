@@ -84,7 +84,7 @@
 	"Enums.h"
 	"Defines.h"
 
-1482531539 source:/home/rickard/github/Falling-Blocks/Main.cpp
+1483493814 source:/home/rickard/github/Falling-Blocks/Main.cpp
 	<iostream>
 	<stack>
 	<vector>
@@ -96,8 +96,8 @@
 	<sstream>
 	<chrono>
 	<ratio>
-	"time.h"
-	"math.h"
+	<cmath>
+	<ctime>
 	<SDL2/SDL.h>
 	<SDL2/SDL_ttf.h>
 	<SDL2/SDL_image.h>
@@ -110,10 +110,11 @@
 
 1482445406 /home/rickard/github/Falling-Blocks/Enums.h
 
-1482445407 /home/rickard/github/Falling-Blocks/cBlock.h
+1483495167 /home/rickard/github/Falling-Blocks/cBlock.h
 	"cSquare.h"
 
-1482445407 /home/rickard/github/Falling-Blocks/cSquare.h
+1483495801 /home/rickard/github/Falling-Blocks/cSquare.h
 	"Enums.h"
 	"Defines.h"
+	<SDL2/SDL.h>
 

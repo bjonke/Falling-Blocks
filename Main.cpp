@@ -5,51 +5,51 @@
 
 // These three lines link in the required SDL components for our project. //
 // Alternatively, we could have linked them in our project settings.      //
+// -lSDL2 -lSDL2_ttf -lSDL2_image -lSDL2_mixer                            //
 //#pragma comment(lib, "SDL.lib")
 //#pragma comment(lib, "SDLmain.lib")
 //#pragma comment(lib, "SDL_TTF.lib")
 
-// -lSDL2 -lSDL2_ttf -lSDL2_image -lSDL2_mixer
 
-#include <iostream>
+#include <iostream>  // For console output mostly
 #include <stack>     // We'll use the STL stack to store our function pointers
 #include <vector>    // An STL vector will store the squares that are not part of the focus block
 #include <string>
 #include <fstream>
 #include <algorithm>
-
 #include <iomanip>
 #include <ctime>
 #include <sstream>
 #include <chrono>
 #include <ratio>
+#include <cmath>    // We'll be using the abs() function located in "math.h"
+#include <ctime>    // We use time(), located in "time.h", to seed our random generator
 
-#include "time.h"    // We use time(), located in "time.h", to seed our random generator
-#include "math.h"    // We'll be using the abs() function located in "math.h"
+// SDL2 Specific include files used in the project
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
+
+
 #include "Defines.h" // Our defines header
 #include "Enums.h"   // Our enums header
 #include "cBlock.h"  // Contains the class that represents a game block
 
 using namespace std;
-
-// The STL stack can't take a function pointer as a type //
-// so we encapsulate a function pointer within a struct. //
-struct StateStruct
-{
-    int id;
-    std::string description;
-
-    //StateStruct() { std::cout << "State constructor" <<  id << std::endl; }
-    StateStruct(double c = 2000, std::string desc = "default") : id(c) , description(desc) { std::cout << "State constructor: "  << id << " : " << description << std::endl; }
-    ~StateStruct() { std::cout << "State desctructor: " << id << " : " << description << std::endl; }
-	void (*StatePointer)();
-};
+using namespace std::chrono;
 
 // Global data //
+struct StateStruct;
+//Volume control type: 1 = SDL (only affects Mupen64Plus output)  2 = OSS
+// mixer (adjusts master PC volume)
+int VOLUME_CONTROL_TYPE = 1;
+// Percentage change each time the volume is increased or decreased
+int VOLUME_ADJUST = 1;
+// Default volume when a game is started.Only used if VOLUME_CONTROL_TYPE is 1
+int VOLUME_DEFAULT = 80;
+// ghost piece showing =1 or 0 for not showing
+int GHOST_PIECE = 1;
 // POINTS PER LINE
 int PointsPerLine;
 // POINTS PER LEVEL
@@ -60,10 +60,11 @@ int InitialSpeed;
 int SpeedChange;
 // SLIDE TIME
 int SlideTime;
-
 std::vector<int> ConfigData;
 
-stack<StateStruct> g_StateStack;        // Our state stack
+std::stack<StateStruct> g_StateStack;        // Our state stack
+std::deque<std::string> g_StateQueue;        // Our state stack
+
 SDL_Surface*       g_Bitmap = NULL;     // Our back and squares bitmap
 SDL_Surface*       g_Window = NULL;     // Our backbuffer
 SDL_Event		   g_Event;             // An SDL event structure for input
@@ -85,15 +86,31 @@ TTF_Font* font;
 SDL_Texture* solidTexture;
 SDL_Texture* blendedTexture;
 SDL_Texture* shadedTexture;
+SDL_Texture* Message;
+
 SDL_Rect solidRect;
 SDL_Rect blendedRect;
 SDL_Rect shadedRect;
+SDL_Rect Message_rect;
 
 SDL_Surface* surfaceMessage;
-SDL_Texture* Message;
-SDL_Rect Message_rect;
+
 TTF_Font* Sans;
 int w,h;
+
+
+// The STL stack can't take a function pointer as a type //
+// so we encapsulate a function pointer within a struct. //
+struct StateStruct
+{
+    int id;
+    std::string description;
+
+    //StateStruct() { std::cout << "State constructor" <<  id << std::endl; }
+    StateStruct(double c = 2000, std::string desc = "default") : id(c) , description(desc) { std::cout << "State constructor: "  << id << " : " << description << std::endl; }
+    ~StateStruct() { std::cout << "State desctructor: " << id << " : " << description << std::endl; }
+	void (*StatePointer)();
+};
 
 bool SetupTTF( const std::string &fontName, int fontSize );
 SDL_Texture* SurfaceToTexture( SDL_Surface* surf );
@@ -135,12 +152,7 @@ int CheckCompletedLines();
 void ClearOldSquares();
 void ClearAllStates();
 void Debugger();
-
-
-
-
-#define WAV_PATH "./Roland-GR-1-Trumpet-C5.wav"
-#define MUS_PATH "./HR2_Friska.ogg"
+std::string GetDateTime();
 
 Mix_Chunk *sfx[100] = {};
 Mix_Music *audio[100] = {};
@@ -148,7 +160,7 @@ Mix_Music *audio[100] = {};
 StateStruct aState(1,"global");
 
 bool quit = true;
-using namespace std::chrono;
+
 
 int main(int argc, char **argv)
 {
@@ -180,18 +192,18 @@ int main(int argc, char **argv)
     oss << std::put_time(&tm, "%Y-%m-%d %H-%M-%S");
     auto str = oss.str();
 
-  steady_clock::time_point t10 = steady_clock::now();
+    steady_clock::time_point t10 = steady_clock::now();
 
-  std::cout << "printing out 1000 stars...\n";
-  for (int i=0; i<1000; ++i) std::cout << "*";
-  std::cout << std::endl;
+    std::cout << "printing out 1000 stars...\n";
+    for (int i=0; i<1000; ++i) std::cout << "*";
+    std::cout << std::endl;
 
-  steady_clock::time_point t20 = steady_clock::now();
+    steady_clock::time_point t20 = steady_clock::now();
 
-  duration<double> time_span2 = duration_cast<duration<double>>(t20 - t10);
+    duration<double> time_span2 = duration_cast<duration<double>>(t20 - t10);
 
-  std::cout << "It took me " << time_span2.count() << " seconds.";
-  std::cout << std::endl;
+    std::cout << "It took me " << time_span2.count() << " seconds.";
+    std::cout << std::endl;
 
 
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
@@ -203,6 +215,8 @@ int main(int argc, char **argv)
 
     StateStruct state(time_span.count(),str);
 
+    g_StateQueue.push_front("MAIN");
+
     //std::cout << str << std::endl;
     SetupTTF( "./assets/fonts/RPGSystem.ttf", 24 );
 
@@ -212,8 +226,6 @@ int main(int argc, char **argv)
         SDL_RenderPresent(renderer);
     }
 
-
-    std::cout << "Shutting down" << std::endl;
 	Shutdown();
 
 	return 0;
@@ -238,15 +250,38 @@ void Init()
         }
         myfile.close();
     }
+    else
+    {
+        cout << "Unable to open file";
+    }
 
-    else cout << "Unable to open file";
-
+    SDL_Delay(3000);
 
 	// Initiliaze SDL video and our timer //
 	if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO) != 0 )
 	{
         std::cout << "Unable to initialize SDL2: " << SDL_GetError() << std::endl;
+        quit = true;
 	};
+
+    // Creates a window object
+	window = SDL_CreateWindow(WINDOW_CAPTION,
+        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+
+    // Loading and using a logo image for the application running
+    SDL_Surface* LogoSurface = IMG_Load( "./assets/atari.png" );
+
+    // The icon is attached to the window pointer
+    SDL_SetWindowIcon(window, LogoSurface);
+
+    SDL_FreeSurface(LogoSurface);
+    // Loading and using a logo image for the application running END
+
+	// Get the number of ticks since SDL was initialized //
+	g_Timer = SDL_GetTicks();
+
+	// Seed our random number generator //
+	srand( time(0) );
 
 	//Initialize SDL_mixer
 	if( Mix_OpenAudio( 22050, MIX_DEFAULT_FORMAT, 2, 4096 ) == -1 )
@@ -303,42 +338,19 @@ void Init()
 	// Load our music
 	audio[0] = Mix_LoadMUS("./airship song remix.flac");
 	if (audio[0] == NULL)
+	{
 		std::cout << "FAIL OPEN AUDIO" << std::endl;
+    }
 
 	if ( Mix_PlayChannel(-1, sfx[0], 0) == -1 )
+	{
 		std::cout << "FAIL OPEN AUDIO" << std::endl;
+    }
 
 	if ( Mix_PlayMusic( audio[0], -1) == -1 )
+    {
         std::cout << "FAIL OPEN AUDIO" << std::endl;
-
-        //while ( Mix_PlayingMusic() ) ;
-
-	// Setup our window's dimensions, bits-per-pixel (0 tells SDL to choose for us), //
-	// and video format (SDL_ANYFORMAT leaves the decision to SDL). This function    //
-	// returns a pointer to our window which we assign to g_Window.                  //
-	//g_Window = SDL_SetVideoMode(WINDOW_WIDTH, WINDOW_HEIGHT, 0, SDL_ANYFORMAT);
-
-	window = SDL_CreateWindow(WINDOW_CAPTION,
-        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
-
-    SDL_Surface* surface2 = IMG_Load( "./assets/atari.png" );
-
-    // The icon is attached to the window pointer
-    SDL_SetWindowIcon(window, surface2);
-
-    SDL_FreeSurface(surface2);
-
-	// Set the title of our window //
-	//SDL_WM_SetCaption(WINDOW_CAPTION, 0);
-	//SDL_SetWindowTitle(window, WINDOW_CAPTION);
-	// Get the number of ticks since SDL was initialized //
-	g_Timer = SDL_GetTicks();
-
-	// Fill our bitmap structure with information //
-	g_Bitmap = SDL_LoadBMP("./data/FallingBlocks2.bmp");
-
-	// Seed our random number generator //
-	srand( time(0) );
+    }
 
 	// Initialize blocks and set them to their proper locations. //
 	g_FocusBlock = new cBlock(BLOCK_START_X, BLOCK_START_Y, g_Bitmap, (BlockType)(rand()%7));
@@ -347,35 +359,40 @@ void Init()
 	// We start by adding a pointer to our exit state, this way //
 	// it will be the last thing the player sees of the game.   //
 
-    auto t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
 
-    std::ostringstream oss;
-    oss << std::put_time(&tm, "%Y-%m-%d %H-%M-%S");
-    auto str = oss.str();
 
-	StateStruct state(1000,str);
+    // Adding a Exit state to the state queue
+	StateStruct state(1000,GetDateTime());
 	state.StatePointer = Exit;
 	g_StateStack.push(state);
+	g_StateQueue.push_front("Exit");
 
 	// Then we add a pointer to our menu state, this will //
 	// be the first thing the player sees of our game.    //
 
 	state.StatePointer = Menu;
 	g_StateStack.push(state);
+	g_StateQueue.push_front("Menu");
 
 	// Initialize the true type font library //
 	//SetupTTF("./assets/fonts/replay.ttf");
-    std::cout << TTF_GetError() << std::endl;
+    //std::cout << TTF_GetError() << std::endl;
+}
+
+std::string GetDateTime()
+{
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+
+    std::ostringstream oss;
+    oss << std::put_time(&tm, "%Y-%m-%d %H-%M-%S");
+    auto str = oss.str();
+    return str;
 }
 
 // This function shuts down our game //
 void Shutdown()
 {
-	// Free our surfaces //
-	//SDL_FreeSurface(g_Bitmap);
-	//SDL_FreeSurface(g_Window);
-
 	// Get pointers to the squares in our focus and next blocks so we can delete them. //
 	// We must do this before we delete our blocks so we don't lose references to the squares. //
 	// Note that these are pointers to arrays of pointers. //
@@ -454,16 +471,13 @@ void Menu()
 
 		g_Timer = SDL_GetTicks();
 	}
-	//Debugger();
+    Debugger();
 }
 
 // This function handles the main game. We'll control the   //
 // drawing of the game as well as any necessary game logic. //
 void Game()
 {
-    SDL_Color foreground  = { 255, 0, 0};   // text color
-    SDL_Color background  = { 244, 244, 244 };  // color of what's behind the text
-
 	// Every frame we increase this value until it is equal to g_FocusBlockSpeed. //
 	// When it reaches that value, we force the focus block down. //
 	static int force_down_counter = 0;
@@ -1364,7 +1378,9 @@ void Debugger()
     std::cout << "---------------" << std::endl;
     std::cout << "g_Level: " << g_Level << std::endl;
     std::cout << "g_Score: " << g_Score << std::endl;
-
+    for(auto it = g_StateQueue.begin(); it != g_StateQueue.end(); it++){
+        std::cout << *(it) << std::endl;
+    }
 }
 
 bool SetupTTF( const std::string &fontName, int fontSize)
@@ -1427,26 +1443,27 @@ SDL_Texture* SurfaceToTexture( SDL_Surface* surf )
     return text;
 }
 
-//Volume control type: 1 = SDL (only affects Mupen64Plus output)  2 = OSS
-// mixer (adjusts master PC volume)
-int VOLUME_CONTROL_TYPE = 1;
-// Percentage change each time the volume is increased or decreased
-int VOLUME_ADJUST = 1;
-// Default volume when a game is started.Only used if VOLUME_CONTROL_TYPE is 1
-int VOLUME_DEFAULT = 80;
 
 void HandleOptionInput()
 {
     const Uint8* keystates = SDL_GetKeyboardState(NULL);
     if(keystates[SDL_SCANCODE_LEFT])
+    {
          Mix_Volume(-1,Mix_Volume(-1,-1) - VOLUME_ADJUST);
+    }
     else if(keystates[SDL_SCANCODE_RIGHT])
+    {
         Mix_Volume(-1,Mix_Volume(-1,-1) + VOLUME_ADJUST);
+    }
 	// Fill our event structure with event information. //
     else if(keystates[SDL_SCANCODE_Q])
+    {
         g_StateStack.pop();
+    }
     else if(keystates[SDL_SCANCODE_ESCAPE])
+    {
         g_StateStack.pop();
+    }
 
 	if ( SDL_PollEvent(&g_Event) )
 	{
@@ -1465,7 +1482,6 @@ void HandleOptionInput()
 }
 
 
-
 void Option()
 {
 	// Here we compare the difference between the current time and the last time we //
@@ -1480,7 +1496,9 @@ void Option()
         img = IMG_LoadTexture(renderer, "./data/FallingBlocks2.bmp");
 
         if (img == NULL)
+        {
             std::cout << "Couldn't load ./data/FallingBlocks2.bmp" << std::endl;
+        }
 
         SDL_QueryTexture(img, NULL, NULL, &w, &h); // get the width and height of the texture
         SDL_Rect texr; texr.x = 0; texr.y = 0; texr.w = w; texr.h = h;
@@ -1494,7 +1512,7 @@ void Option()
 		CreateTextTextures("MUSIC VOLUME",60,160);
 		CreateTextTextures(std::to_string(Music_Volume),60,190);
 		CreateTextTextures("SHOW GHOST PIECE",60,220);
-		CreateTextTextures("YES",60,250);
+		CreateTextTextures(std::to_string(GHOST_PIECE),60,250);
 
 		g_Timer = SDL_GetTicks();
 	}

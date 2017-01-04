@@ -7,6 +7,7 @@
 
 #include "Enums.h"
 #include "Defines.h"
+#include <SDL2/SDL.h> // Used for SDL_Color
 
 class cSquare
 {
@@ -18,28 +19,20 @@ private:
 	// Type of block. Needed to locate the correct square in our bitmap //
 	BlockType m_BlockType;
 
-	// A pointer to our bitmap surface from "Main.cpp" //
-	//SDL_Surface* m_Bitmap;
-
-	int m_RedColor;
-	int m_GreenColor;
-	int m_BlueColor;
+    SDL_Color m_RGB;
 
 public:
 	// Default constructor, your compiler will probably require this //
 	cSquare()
 	{
+        std::cout << "Constructing a square..." << std::endl;
 	}
 
 	// Main constructor takes location and type of block, //
 	// and pointer to our bitmap surface. //
-	cSquare(int x, int y, SDL_Surface* bitmap, BlockType type, int red, int green, int blue) : m_CenterX(x), m_CenterY(y),
-		m_BlockType(type), m_RedColor(red), m_GreenColor(green), m_BlueColor(blue)
+	cSquare(int x, int y, SDL_Surface* bitmap, BlockType type, SDL_Color rgb) : m_CenterX(x), m_CenterY(y),
+		m_BlockType(type), m_RGB(rgb)
 	{
-        //std::cout << "Main constructor called" << std::endl;
-        //std::cout << "x:" << x << "y:" << y << " RGB(" << red << "," << green << "," << blue << ")" << std::endl;
-        //std::cout << "CenterX: " << m_CenterX << " CenterY:" << m_CenterY << std::endl;
-        //std::cout << "Type: " << getType(type)<< std::endl;
 	}
 
 	std::string getType(int type)
@@ -75,45 +68,39 @@ public:
 		{
 		case SQUARE_BLOCK:
 			{
-                SDL_Rect temp = { RED_SQUARE_X, RED_SQUARE_Y, SQUARE_MEDIAN * 2, SQUARE_MEDIAN * 2 };
-                source = temp;
+                source = { RED_SQUARE_X, RED_SQUARE_Y, SQUARE_MEDIAN * 2, SQUARE_MEDIAN * 2 };
 			} break;
 		case T_BLOCK:
 			{
-                SDL_Rect temp = { PURPLE_SQUARE_X, PURPLE_SQUARE_Y, SQUARE_MEDIAN * 2, SQUARE_MEDIAN * 2 };
-                source = temp;
+                source = { PURPLE_SQUARE_X, PURPLE_SQUARE_Y, SQUARE_MEDIAN * 2, SQUARE_MEDIAN * 2 };
 			} break;
 		case L_BLOCK:
 			{
-                SDL_Rect temp = { GREY_SQUARE_X, GREY_SQUARE_Y, SQUARE_MEDIAN * 2, SQUARE_MEDIAN * 2 };
-                source = temp;
+                source = { GREY_SQUARE_X, GREY_SQUARE_Y, SQUARE_MEDIAN * 2, SQUARE_MEDIAN * 2 };
 			} break;
 		case BACKWARDS_L_BLOCK:
 			{
-                SDL_Rect temp = { BLUE_SQUARE_X, BLUE_SQUARE_Y, SQUARE_MEDIAN * 2, SQUARE_MEDIAN * 2 };
-                source = temp;
+                source = { BLUE_SQUARE_X, BLUE_SQUARE_Y, SQUARE_MEDIAN * 2, SQUARE_MEDIAN * 2 };
 			} break;
 		case STRAIGHT_BLOCK:
 			{
-                SDL_Rect temp = { GREEN_SQUARE_X, GREEN_SQUARE_Y, SQUARE_MEDIAN * 2, SQUARE_MEDIAN * 2 };
-                source = temp;
+                source = { GREEN_SQUARE_X, GREEN_SQUARE_Y, SQUARE_MEDIAN * 2, SQUARE_MEDIAN * 2 };
 			} break;
 		case S_BLOCK:
 			{
-                SDL_Rect temp = { BLACK_SQUARE_X, BLACK_SQUARE_Y, SQUARE_MEDIAN * 2, SQUARE_MEDIAN * 2 };
-                source = temp;
+                source = { BLACK_SQUARE_X, BLACK_SQUARE_Y, SQUARE_MEDIAN * 2, SQUARE_MEDIAN * 2 };
 			} break;
 		case BACKWARDS_S_BLOCK:
 			{
-                SDL_Rect temp = { YELLOW_SQUARE_X, YELLOW_SQUARE_Y, SQUARE_MEDIAN * 2, SQUARE_MEDIAN * 2 };
-                source = temp;
+                source = { YELLOW_SQUARE_X, YELLOW_SQUARE_Y, SQUARE_MEDIAN * 2, SQUARE_MEDIAN * 2 };
 			} break;
 		}
 
 		// Draw at square's current location. Remember that m_X and m_Y store the center of the square. //
 		//SDL_Rect destination = { m_CenterX - SQUARE_MEDIAN, m_CenterY - SQUARE_MEDIAN, SQUARE_MEDIAN * 2, SQUARE_MEDIAN * 2 };
 
-        SDL_SetRenderDrawColor(MainRenderer, m_RedColor, m_GreenColor, m_BlueColor, 255);
+        //SDL_SetRenderDrawColor(MainRenderer, m_RedColor, m_GreenColor, m_BlueColor, 255);
+        SDL_SetRenderDrawColor(MainRenderer, m_RGB.r, m_RGB.g, m_RGB.b, 255);
         SDL_Rect rectangle;
 
         rectangle.x = m_CenterX - SQUARE_MEDIAN;
@@ -122,51 +109,6 @@ public:
         rectangle.h = SQUARE_MEDIAN * 2;
 
         SDL_RenderFillRect(MainRenderer, &rectangle);
-
-        /*
-        SDL_Rect SquareBlock;
-        SDL_Rect TBlock;
-        SDL_Rect LBlock;
-        SDL_Rect BackwardsLBlock;
-        SDL_Rect StraightBlock;
-        SDL_Rect SBlock;
-        SDL_Rect BackwardsSBlock;
-
-        SquareBlock.x = 0;
-        SquareBlock.y = 0;
-        SquareBlock.w = 32;
-        SquareBlock.h = 32;
-
-        TBlock.x = 0;
-        TBlock.y = 0;
-        TBlock.w = 32;
-        TBlock.h = 32;
-
-        LBlock.x = 0;
-        LBlock.y = 0;
-        LBlock.w = 32;
-        LBlock.h = 32;
-
-        BackwardsLBlock.x = 0;
-        BackwardsLBlock.y = 0;
-        BackwardsLBlock.w = 32;
-        BackwardsLBlock.h = 32;
-
-        StraightBlock.x = 0;
-        StraightBlock.y = 0;
-        StraightBlock.w = 32;
-        StraightBlock.h = 32;
-
-        SBlock.x = 0;
-        SBlock.y = 0;
-        SBlock.w = 32;
-        SBlock.h = 32;
-
-        BackwardsSBlock.x = 0;
-        BackwardsSBlock.y = 0;
-        BackwardsSBlock.w = 32;
-        BackwardsSBlock.h = 32;
-        */
 	}
 
 	// Remember, SQUARE_MEDIAN represents the distance from the square's center to //
@@ -197,11 +139,4 @@ public:
 	// Mutators //
 	void SetCenterX(int x) { m_CenterX = x; }
 	void SetCenterY(int y) { m_CenterY = y; }
-
-	void SetColor(int r, int g, int b)
-	{
-        m_RedColor = 0;
-        m_GreenColor = 0;
-        m_BlueColor = 0;
-	}
 };

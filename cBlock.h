@@ -20,6 +20,7 @@ private:
 
 	// Array of squares that make up the block //
 	cSquare* m_Squares[4];
+	//std::vector<cSquare>;
 
 public:
 	// The constructor just sets the block location and calls SetupSquares //
@@ -45,6 +46,8 @@ public:
 		m_CenterX = x;
 		m_CenterY = y;
 
+        SDL_Color aRGB;
+
 		// Make sure that any current squares are deleted //
 		for (int i=0; i<4; i++)
 		{
@@ -58,83 +61,104 @@ public:
 			{
                 //#F7D308
 				// Upper left //
-				m_Squares[0] = new cSquare(x - SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type,247,211,8);
+				aRGB.r = 247;
+				aRGB.g = 211;
+				aRGB.b = 8;
+				m_Squares[0] = new cSquare(x - SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type, aRGB );
 				// Lower Left //
-				m_Squares[1] = new cSquare(x - SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type,247,211,8);
+				m_Squares[1] = new cSquare(x - SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 				// Upper right //
-				m_Squares[2] = new cSquare(x + SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type,247,211,8);
+				m_Squares[2] = new cSquare(x + SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 				// Lower right //
-				m_Squares[3] = new cSquare(x + SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type,247,211,8);
+				m_Squares[3] = new cSquare(x + SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 			} break;
 		case T_BLOCK:
 			{
                 // #AD4D9C
 				// Top //
-				m_Squares[0] = new cSquare(x + SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type,173,77,156);
+				aRGB.r = 173;
+				aRGB.g = 77;
+				aRGB.b = 156;
+				m_Squares[0] = new cSquare(x + SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 				// Middle //
-				m_Squares[1] = new cSquare(x + SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type,173,77,156);
+				m_Squares[1] = new cSquare(x + SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 				// Left //
-				m_Squares[2] = new cSquare(x - SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type,173,77,156);
+				m_Squares[2] = new cSquare(x - SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 				// Right //
-				m_Squares[3] = new cSquare(x + (SQUARE_MEDIAN * 3), y + SQUARE_MEDIAN, bitmap, m_Type,173,77,156);
+				m_Squares[3] = new cSquare(x + (SQUARE_MEDIAN * 3), y + SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 			} break;
 		case L_BLOCK:
 			{
                 // #EF7921
 				// |  //
-				m_Squares[0] = new cSquare(x - SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type,239,121,33);
+				aRGB.r = 239;
+				aRGB.g = 121;
+				aRGB.b = 33;
+				m_Squares[0] = new cSquare(x - SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 				// |  //
-				m_Squares[1] = new cSquare(x - SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type,239,121,33);
+				m_Squares[1] = new cSquare(x - SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 				// |_ //
-				m_Squares[2] = new cSquare(x - SQUARE_MEDIAN, y + (SQUARE_MEDIAN * 3), bitmap, m_Type,239,121,33);
+				m_Squares[2] = new cSquare(x - SQUARE_MEDIAN, y + (SQUARE_MEDIAN * 3), bitmap, m_Type, aRGB);
 				      // __ //
-				m_Squares[3] = new cSquare(x + SQUARE_MEDIAN, y + (SQUARE_MEDIAN * 3), bitmap, m_Type,239,121,33);
+				m_Squares[3] = new cSquare(x + SQUARE_MEDIAN, y + (SQUARE_MEDIAN * 3), bitmap, m_Type, aRGB);
 			} break;
 		case BACKWARDS_L_BLOCK:
 			{
                 // #2100F9
 				    //  | //
-				m_Squares[0] = new cSquare(x + SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type,33,0,249);
+				aRGB.r = 33;
+				aRGB.g = 0;
+				aRGB.b = 249;
+				m_Squares[0] = new cSquare(x + SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 				    //  | //
-				m_Squares[1] = new cSquare(x + SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type,33,0,249);
+				m_Squares[1] = new cSquare(x + SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 				    // _| //
-				m_Squares[2] = new cSquare(x + SQUARE_MEDIAN, y + (SQUARE_MEDIAN * 3), bitmap, m_Type,33,0,249);
+				m_Squares[2] = new cSquare(x + SQUARE_MEDIAN, y + (SQUARE_MEDIAN * 3), bitmap, m_Type, aRGB);
 				// __ //
-				m_Squares[3] = new cSquare(x - SQUARE_MEDIAN, y + (SQUARE_MEDIAN * 3), bitmap, m_Type,33,0,249);
+				m_Squares[3] = new cSquare(x - SQUARE_MEDIAN, y + (SQUARE_MEDIAN * 3), bitmap, m_Type, aRGB);
 			} break;
 		case STRAIGHT_BLOCK:
 			{
                 // #31C7EF
 				// Top //
-				m_Squares[0] = new cSquare(x + SQUARE_MEDIAN, y - (SQUARE_MEDIAN * 3), bitmap, m_Type,49,199,239);
-				m_Squares[1] = new cSquare(x + SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type,49,199,239);
-				m_Squares[2] = new cSquare(x + SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type,49,199,239);
-				m_Squares[3] = new cSquare(x + SQUARE_MEDIAN, y + (SQUARE_MEDIAN * 3), bitmap, m_Type,49,199,239);
+				aRGB.r = 49;
+				aRGB.g = 199;
+				aRGB.b = 239;
+				m_Squares[0] = new cSquare(x + SQUARE_MEDIAN, y - (SQUARE_MEDIAN * 3), bitmap, m_Type, aRGB);
+				m_Squares[1] = new cSquare(x + SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type, aRGB);
+				m_Squares[2] = new cSquare(x + SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type, aRGB);
+				m_Squares[3] = new cSquare(x + SQUARE_MEDIAN, y + (SQUARE_MEDIAN * 3), bitmap, m_Type, aRGB);
 				// Bottom //
 			} break;
 		case S_BLOCK:
 			{
                 // #00FF3B
 				// Top right //
-				m_Squares[0] = new cSquare(x + (SQUARE_MEDIAN * 3), y - SQUARE_MEDIAN, bitmap, m_Type,0,255,59);
+				aRGB.r = 0;
+				aRGB.g = 255;
+				aRGB.b = 59;
+				m_Squares[0] = new cSquare(x + (SQUARE_MEDIAN * 3), y - SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 				// Top middle //
-				m_Squares[1] = new cSquare(x + SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type,0,255,59);
+				m_Squares[1] = new cSquare(x + SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 				// Bottom middle //
-				m_Squares[2] = new cSquare(x + SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type,0,255,59);
+				m_Squares[2] = new cSquare(x + SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 				// Bottom left //
-				m_Squares[3] = new cSquare(x - SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type,0,255,59);
+				m_Squares[3] = new cSquare(x - SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 			} break;
 		case BACKWARDS_S_BLOCK:
 			{
                 // #FF0623
 				// Top left //
-				m_Squares[0] = new cSquare(x - SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type,255,6,35);
+				aRGB.r = 255;
+				aRGB.g = 6;
+				aRGB.b = 35;
+				m_Squares[0] = new cSquare(x - SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 				// Top middle //
-				m_Squares[1] = new cSquare(x + SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type,255,6,35);
+				m_Squares[1] = new cSquare(x + SQUARE_MEDIAN, y - SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 				// Bottom middle //
-				m_Squares[2] = new cSquare(x + SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type,255,6,35);
+				m_Squares[2] = new cSquare(x + SQUARE_MEDIAN, y + SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 				// Bottom right //
-				m_Squares[3] = new cSquare(x + (SQUARE_MEDIAN * 3), y + SQUARE_MEDIAN, bitmap, m_Type,255,6,35);
+				m_Squares[3] = new cSquare(x + (SQUARE_MEDIAN * 3), y + SQUARE_MEDIAN, bitmap, m_Type, aRGB);
 			} break;
 		}
 	}
