@@ -5,9 +5,9 @@
 #pragma once
 
 // Window related defines //
-#define WINDOW_WIDTH   300
+#define WINDOW_WIDTH   500
 #define WINDOW_HEIGHT  400
-#define WINDOW_CAPTION "Falling Blocks"
+#define WINDOW_CAPTION "Donkey"
 
 // Game related defines //
 #define FRAMES_PER_SECOND 30
@@ -39,12 +39,12 @@
 #define BLOCK_START_Y    59
 
 // Location on game screen for displaying... //
-#define LEVEL_RECT_X        42  // current level
-#define LEVEL_RECT_Y        320
-#define SCORE_RECT_X   	    42  // current score
-#define SCORE_RECT_Y  	    340
-#define NEEDED_SCORE_RECT_X 42  // score needed for next level
-#define NEEDED_SCORE_RECT_Y 360
+#define LEVEL_RECT_X        300  // current level
+#define LEVEL_RECT_Y        0
+#define SCORE_RECT_X   	    300  // current score
+#define SCORE_RECT_Y  	    120
+#define NEEDED_SCORE_RECT_X 300  // score needed for next level
+#define NEEDED_SCORE_RECT_Y 240
 #define NEXT_BLOCK_CIRCLE_X 214 // next block in line to be focus block
 #define NEXT_BLOCK_CIRCLE_Y 347
 

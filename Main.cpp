@@ -47,7 +47,7 @@ int VOLUME_CONTROL_TYPE = 1;
 // Percentage change each time the volume is increased or decreased
 int VOLUME_ADJUST = 1;
 // Default volume when a game is started.Only used if VOLUME_CONTROL_TYPE is 1
-int VOLUME_DEFAULT = 80;
+int VOLUME_DEFAULT = 0;
 // ghost piece showing =1 or 0 for not showing
 int GHOST_PIECE = 1;
 // POINTS PER LINE
@@ -60,6 +60,7 @@ int InitialSpeed;
 int SpeedChange;
 // SLIDE TIME
 int SlideTime;
+
 std::vector<int> ConfigData;
 
 std::stack<StateStruct> g_StateStack;        // Our state stack
@@ -77,6 +78,7 @@ std::vector<cSquare*>   g_OldSquares;        // The squares that no longer form 
 int				   g_Score = 0;         // Players current score
 int				   g_Level = 1;         // Current level player is on
 int				   g_FocusBlockSpeed = INITIAL_SPEED; // Speed of the focus block
+int                g_Lines = 0; // Players amount of lines removed
 
 SDL_Renderer * renderer;
 SDL_Window * window;
@@ -164,56 +166,9 @@ bool quit = true;
 
 int main(int argc, char **argv)
 {
-    high_resolution_clock::time_point t1 = high_resolution_clock::now();
-
 	Init();
 
     renderer = SDL_CreateRenderer(window, -1, 0);
-
-	// Our game loop is just a while loop that breaks when our state stack is empty //
-//	while (quit)
-//	{
-//		g_StateStack.top().StatePointer();
-//        SDL_RenderPresent(renderer);
-//	}
-
-
-	//state.StatePointer = Exit;
-	//g_StateStack.push(state);
-
-    //state.StatePointer = Menu;
-	//g_StateStack.push(state);
-
-
-    auto t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
-
-    std::ostringstream oss;
-    oss << std::put_time(&tm, "%Y-%m-%d %H-%M-%S");
-    auto str = oss.str();
-
-    steady_clock::time_point t10 = steady_clock::now();
-
-    std::cout << "printing out 1000 stars...\n";
-    for (int i=0; i<1000; ++i) std::cout << "*";
-    std::cout << std::endl;
-
-    steady_clock::time_point t20 = steady_clock::now();
-
-    duration<double> time_span2 = duration_cast<duration<double>>(t20 - t10);
-
-    std::cout << "It took me " << time_span2.count() << " seconds.";
-    std::cout << std::endl;
-
-
-    high_resolution_clock::time_point t2 = high_resolution_clock::now();
-
-    duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
-
-    std::cout << "It took me " << time_span.count() << " seconds.";
-    std::cout << std::endl;
-
-    StateStruct state(time_span.count(),str);
 
     g_StateQueue.push_front("MAIN");
 
@@ -255,8 +210,6 @@ void Init()
         cout << "Unable to open file";
     }
 
-    SDL_Delay(3000);
-
 	// Initiliaze SDL video and our timer //
 	if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO) != 0 )
 	{
@@ -266,7 +219,8 @@ void Init()
 
     // Creates a window object
 	window = SDL_CreateWindow(WINDOW_CAPTION,
-        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+        WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL);
 
     // Loading and using a logo image for the application running
     SDL_Surface* LogoSurface = IMG_Load( "./assets/atari.png" );
@@ -289,6 +243,7 @@ void Init()
         std::cout << "FAIL OPEN AUDIO" << std::endl;
     }
 
+    Mix_VolumeMusic(MIX_MAX_VOLUME/4);
     // Load our sound effect
 	sfx[0] = Mix_LoadWAV("./sfx/SFX_ButtonHover.ogg");
 	sfx[1] = Mix_LoadWAV("./sfx/SFX_ButtonUp.ogg");
@@ -336,7 +291,7 @@ void Init()
 	sfx[41] = Mix_LoadWAV("./sfx/VO_BTBTSPIN.ogg");
 
 	// Load our music
-	audio[0] = Mix_LoadMUS("./airship song remix.flac");
+	audio[0] = Mix_LoadMUS("./sfx/Tetris.ogg");
 	if (audio[0] == NULL)
 	{
 		std::cout << "FAIL OPEN AUDIO" << std::endl;
@@ -359,8 +314,6 @@ void Init()
 	// We start by adding a pointer to our exit state, this way //
 	// it will be the last thing the player sees of the game.   //
 
-
-
     // Adding a Exit state to the state queue
 	StateStruct state(1000,GetDateTime());
 	state.StatePointer = Exit;
@@ -377,6 +330,8 @@ void Init()
 	// Initialize the true type font library //
 	//SetupTTF("./assets/fonts/replay.ttf");
     //std::cout << TTF_GetError() << std::endl;
+
+    Mix_Volume(-1, MIX_MAX_VOLUME/4);
 }
 
 std::string GetDateTime()
@@ -558,9 +513,13 @@ void Game()
 		string level = "Level: ";
 		level.append( std::to_string(g_Level) );
 
+		string lines = "Lines: ";
+		lines.append( std::to_string(g_Lines) );
+
 		CreateTextTextures(nextscore.c_str(),NEEDED_SCORE_RECT_X,NEEDED_SCORE_RECT_Y);
 		CreateTextTextures(score.c_str(),SCORE_RECT_X,SCORE_RECT_Y);
 		CreateTextTextures(level.c_str(),LEVEL_RECT_X,LEVEL_RECT_Y);
+		CreateTextTextures(lines.c_str(),LEVEL_RECT_X,LEVEL_RECT_Y+ 30);
 
 		g_Timer = SDL_GetTicks();
 	}
@@ -690,7 +649,6 @@ void HandleMenuInput()
 			// While state stack isn't empty, pop //
 			while (!g_StateStack.empty())
 			{
-                std::cout << "HandleMenuInput POP" << std::endl;
 				g_StateStack.pop();
 			}
 
@@ -708,7 +666,6 @@ void HandleMenuInput()
 			// Quit //
 			if (g_Event.key.keysym.sym == SDLK_q)
 			{
-                std::cout << "HandleMenuInput POP" << std::endl;
 				g_StateStack.pop();
 				return;  // game is over, exit the function
 			}
@@ -735,7 +692,6 @@ void HandleMenuInput()
 // handles it for the main game state.     //
 void HandleGameInput()
 {
-
     const Uint8* keystates = SDL_GetKeyboardState(NULL);
     if(keystates[SDL_SCANCODE_LEFT])
 	{
@@ -769,19 +725,19 @@ void HandleGameInput()
 	}
     else if(keystates[SDL_SCANCODE_UP])
     {
-				// Check collisions before rotating //
-				if (!CheckRotationCollisions(g_FocusBlock))
-				{
-					g_FocusBlock->Rotate();
-                    SDL_Delay(50);
-				}
-				else
-				{
-                    if ( Mix_PlayChannel(-1, sfx[10], 0) == -1 )
-                    {
-                        std::cout << "FAIL OPEN AUDIO" << std::endl;
-                    }
-				}
+        // Check collisions before rotating //
+        if (!CheckRotationCollisions(g_FocusBlock))
+        {
+            g_FocusBlock->Rotate();
+            SDL_Delay(50);
+        }
+        else
+        {
+            if ( Mix_PlayChannel(-1, sfx[10], 0) == -1 )
+            {
+                std::cout << "FAIL OPEN AUDIO" << std::endl;
+            }
+        }
     }
     else if(keystates[SDL_SCANCODE_DOWN])
     {
@@ -926,7 +882,6 @@ void HandleExitInput()
 			// While state stack isn't empty, pop //
 			while (!g_StateStack.empty())
 			{
-                std::cout << "HandleExitInput POP" << std::endl;
 				g_StateStack.pop();
 			}
 			return;  // game is over, exit the function
@@ -937,7 +892,6 @@ void HandleExitInput()
 		{
 			if (g_Event.key.keysym.sym == SDLK_ESCAPE)
 			{
-                std::cout << "HandleExitInput POP" << std::endl;
 				g_StateStack.pop();
 
 				return;  // this state is done, exit the function
@@ -945,7 +899,6 @@ void HandleExitInput()
 			// Yes //
 			if (g_Event.key.keysym.sym == SDLK_y)
 			{
-                std::cout << "HandleExitInput POP" << std::endl;
 				g_StateStack.pop();
 				return;  // game is over, exit the function
 			}
@@ -974,7 +927,6 @@ void HandleWinLoseInput()
 			{
 				g_StateStack.pop();
 			}
-
 			return;
 		}
 
@@ -984,7 +936,6 @@ void HandleWinLoseInput()
 			if (g_Event.key.keysym.sym == SDLK_ESCAPE)
 			{
 				g_StateStack.pop();
-
 				return;
 			}
 			if (g_Event.key.keysym.sym == SDLK_y)
@@ -1186,6 +1137,8 @@ void HandleBottomCollision()
 
 	if ( num_lines > 0 )
 	{
+        // increase player's number of lines
+        g_Lines += num_lines;
 		// Increase player's score according to number of lines completed //
 		g_Score += POINTS_PER_LINE * num_lines;
 
@@ -1295,7 +1248,7 @@ int CheckCompletedLines()
 
 	if(num_lines > 0 )
 	{
-        if ( Mix_PlayChannel(num_lines, sfx[26+num_lines], 0) == -1 )
+        if ( Mix_PlayChannel(num_lines, sfx[25+num_lines], 0) == -1 )
         {
             std::cout << "FAIL OPEN AUDIO" << std::endl;
         }
@@ -1383,27 +1336,6 @@ void Debugger()
     }
 }
 
-bool SetupTTF( const std::string &fontName, int fontSize)
-{
-    // SDL2_TTF needs to be initialized just like SDL2
-    if ( TTF_Init() == -1 )
-    {
-        std::cout << " Failed to initialize TTF : " << SDL_GetError() << std::endl;
-        return false;
-    }
-
-    // Load our fonts, with a huge size
-    font = TTF_OpenFont( fontName.c_str(), fontSize );
-
-    // Error check
-    if ( font == nullptr )
-    {
-        std::cout << " Failed to load font : " << SDL_GetError() << std::endl;
-        return false;
-    }
-    return true;
-}
-
 void CreateTextTextures(std::string inText, int inX, int inY)
 {
     SDL_Color textColor  = { 255, 255, 255};   // text color
@@ -1447,13 +1379,17 @@ SDL_Texture* SurfaceToTexture( SDL_Surface* surf )
 void HandleOptionInput()
 {
     const Uint8* keystates = SDL_GetKeyboardState(NULL);
-    if(keystates[SDL_SCANCODE_LEFT])
+    if(keystates[SDL_SCANCODE_KP_MINUS])
     {
          Mix_Volume(-1,Mix_Volume(-1,-1) - VOLUME_ADJUST);
     }
-    else if(keystates[SDL_SCANCODE_RIGHT])
+    else if(keystates[SDL_SCANCODE_KP_PLUS])
     {
         Mix_Volume(-1,Mix_Volume(-1,-1) + VOLUME_ADJUST);
+    }
+    else if(keystates[SDL_SCANCODE_G])
+    {
+        GHOST_PIECE = -GHOST_PIECE;
     }
 	// Fill our event structure with event information. //
     else if(keystates[SDL_SCANCODE_Q])
@@ -1479,6 +1415,7 @@ void HandleOptionInput()
 			return;  // game is over, exit the function
 		}
 	}
+	SDL_Delay(10);
 }
 
 
@@ -1516,5 +1453,26 @@ void Option()
 
 		g_Timer = SDL_GetTicks();
 	}
-	//Debugger();
+}
+
+// Initializing SDL Font for usage in the game
+bool SetupTTF( const std::string &fontName, int fontSize)
+{
+    // SDL2_TTF needs to be initialized just like SDL2
+    if ( TTF_Init() == -1 )
+    {
+        std::cout << " Failed to initialize TTF : " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    // Load our fonts, with a huge size
+    font = TTF_OpenFont( fontName.c_str(), fontSize );
+
+    // Error check
+    if ( font == nullptr )
+    {
+        std::cout << " Failed to load font : " << SDL_GetError() << std::endl;
+        return false;
+    }
+    return true;
 }
