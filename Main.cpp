@@ -164,16 +164,11 @@ StateStruct aState(1,"global");
 bool quit = true;
 
 
+
+// MAIN FUNCTION AND START OF APPLICATION
 int main(int argc, char **argv)
 {
 	Init();
-
-    renderer = SDL_CreateRenderer(window, -1, 0);
-
-    g_StateQueue.push_front("MAIN");
-
-    //std::cout << str << std::endl;
-    SetupTTF( "./assets/fonts/RPGSystem.ttf", 24 );
 
 	while(quit)
 	{
@@ -332,6 +327,13 @@ void Init()
     //std::cout << TTF_GetError() << std::endl;
 
     Mix_Volume(-1, MIX_MAX_VOLUME/4);
+
+    renderer = SDL_CreateRenderer(window, -1, 0);
+
+    g_StateQueue.push_front("MAIN");
+
+    //std::cout << str << std::endl;
+    SetupTTF( "./assets/fonts/RPGSystem.ttf", 24 );
 }
 
 std::string GetDateTime()
@@ -400,29 +402,35 @@ void Shutdown()
 // the player can select to enter the game, or quit.     //
 void Menu()
 {
+    /* Select the color for drawing. It is set to red here. */
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+
+    /* Clear the entire screen to our selected color. */
+    SDL_RenderClear(renderer);
+
+    SDL_Texture *img = NULL;
+    int w, h; // texture width & height
+    img = IMG_LoadTexture(renderer, "./data/FallingBlocks2.bmp");
+
+    if (img == NULL)
+        std::cout << "Couldn't load ./data/FallingBlocks2.bmp" << std::endl;
+
+    SDL_QueryTexture(img, NULL, NULL, &w, &h); // get the width and height of the texture
+    SDL_Rect texr; texr.x = 0; texr.y = 0; texr.w = w; texr.h = h;
+
+    // copy the texture to the rendering context
+    SDL_RenderCopy(renderer, img, NULL, &texr);
+
+    CreateTextTextures("Start (G)ame",100,120);
+    CreateTextTextures("(Q)uit game",100,150);
+    CreateTextTextures("(O)ptions",100,180);
+
 	// Here we compare the difference between the current time and the last time we //
 	// handled a frame. If FRAME_RATE amount of time has passed, it's time for a new frame. //
 	if ( (SDL_GetTicks() - g_Timer) >= FRAME_RATE )
 	{
 		// We start by calling our input function
 		HandleMenuInput();
-
-        SDL_Texture *img = NULL;
-        int w, h; // texture width & height
-        img = IMG_LoadTexture(renderer, "./data/FallingBlocks2.bmp");
-
-        if (img == NULL)
-            std::cout << "Couldn't load ./data/FallingBlocks2.bmp" << std::endl;
-
-        SDL_QueryTexture(img, NULL, NULL, &w, &h); // get the width and height of the texture
-        SDL_Rect texr; texr.x = 0; texr.y = 0; texr.w = w; texr.h = h;
-
-		// copy the texture to the rendering context
-		SDL_RenderCopy(renderer, img, NULL, &texr);
-
-        CreateTextTextures("Start (G)ame",100,120);
-		CreateTextTextures("(Q)uit game",100,150);
-		CreateTextTextures("(O)ptions",100,180);
 
 		g_Timer = SDL_GetTicks();
 	}
@@ -433,6 +441,71 @@ void Menu()
 // drawing of the game as well as any necessary game logic. //
 void Game()
 {
+    /* Select the color for drawing. It is set to red here. */
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+
+    /* Clear the entire screen to our selected color. */
+    SDL_RenderClear(renderer);
+
+    SDL_Texture *img = NULL;
+    int w, h; // texture width & height
+    img = IMG_LoadTexture(renderer, "./data/FallingBlocks2.bmp");
+
+    if (img == NULL)
+        std::cout << "Couldn't load ./data/FallingBlocks2.bmp" << std::endl;
+
+    SDL_QueryTexture(img, NULL, NULL, &w, &h); // get the width and height of the texture
+    SDL_Rect texr; texr.x = 0; texr.y = 0; texr.w = w; texr.h = h;
+
+    // copy the texture to the rendering context
+    SDL_RenderCopy(renderer, img, NULL, &texr);
+
+    if(GHOST_PIECE == 1)
+    {
+        SDL_Texture *block = NULL;
+        int blockWidth, blockHeight; // texture width & height
+        block = IMG_LoadTexture(renderer, "./data/block.bmp");
+
+        if (block == NULL)
+            std::cout << "Couldn't load ./data/block.bmp" << std::endl;
+
+        SDL_QueryTexture(block, NULL, NULL, &blockWidth, &blockHeight); // get the width and height of the texture
+        SDL_Rect BlockRect; BlockRect.x = 0; BlockRect.y = 0; BlockRect.w = blockWidth; BlockRect.h = blockHeight;
+
+        SDL_QueryTexture(block, NULL, NULL, &blockWidth, &blockHeight);
+
+        // copy the texture to the rendering context
+        SDL_RenderCopy(renderer, block, NULL, &BlockRect);
+    }
+
+
+    // Draw the focus block and next block. BUG ERROR BLACK BACKGROUND//
+    g_FocusBlock->Draw(g_Window,renderer);
+    g_NextBlock->Draw(g_Window,renderer);
+
+    // Draw the old squares. //
+    for (unsigned int i=0; i < g_OldSquares.size(); i++)
+    {
+        g_OldSquares[i]->Draw(g_Window,renderer);
+    }
+
+    string score = "Score: ";
+    score.append( std::to_string(g_Score) );
+
+    string nextscore = "Needed Score: ";
+    nextscore.append( std::to_string(g_Level*POINTS_PER_LEVEL) );
+
+    string level = "Level: ";
+    level.append( std::to_string(g_Level) );
+
+    string lines = "Lines: ";
+    lines.append( std::to_string(g_Lines) );
+
+    CreateTextTextures(nextscore.c_str(),NEEDED_SCORE_RECT_X,NEEDED_SCORE_RECT_Y);
+    CreateTextTextures(score.c_str(),SCORE_RECT_X,SCORE_RECT_Y);
+    CreateTextTextures(level.c_str(),LEVEL_RECT_X,LEVEL_RECT_Y);
+    CreateTextTextures(lines.c_str(),LEVEL_RECT_X,LEVEL_RECT_Y+ 30);
+
 	// Every frame we increase this value until it is equal to g_FocusBlockSpeed. //
 	// When it reaches that value, we force the focus block down. //
 	static int force_down_counter = 0;
@@ -481,46 +554,6 @@ void Game()
 			HandleBottomCollision();
 		}
 
-        SDL_Texture *img = NULL;
-        int w, h; // texture width & height
-        img = IMG_LoadTexture(renderer, "./data/FallingBlocks2.bmp");
-
-        if (img == NULL)
-            std::cout << "Couldn't load ./data/FallingBlocks2.bmp" << std::endl;
-
-        SDL_QueryTexture(img, NULL, NULL, &w, &h); // get the width and height of the texture
-        SDL_Rect texr; texr.x = 0; texr.y = 0; texr.w = w; texr.h = h;
-
-		// copy the texture to the rendering context
-		SDL_RenderCopy(renderer, img, NULL, &texr);
-
-		// Draw the focus block and next block. BUG ERROR BLACK BACKGROUND//
-		g_FocusBlock->Draw(g_Window,renderer);
-		g_NextBlock->Draw(g_Window,renderer);
-
-		// Draw the old squares. //
-		for (unsigned int i=0; i < g_OldSquares.size(); i++)
-		{
-			g_OldSquares[i]->Draw(g_Window,renderer);
-		}
-
-		string score = "Score: ";
-		score.append( std::to_string(g_Score) );
-
-		string nextscore = "Needed Score: ";
-		nextscore.append( std::to_string(g_Level*POINTS_PER_LEVEL) );
-
-		string level = "Level: ";
-		level.append( std::to_string(g_Level) );
-
-		string lines = "Lines: ";
-		lines.append( std::to_string(g_Lines) );
-
-		CreateTextTextures(nextscore.c_str(),NEEDED_SCORE_RECT_X,NEEDED_SCORE_RECT_Y);
-		CreateTextTextures(score.c_str(),SCORE_RECT_X,SCORE_RECT_Y);
-		CreateTextTextures(level.c_str(),LEVEL_RECT_X,LEVEL_RECT_Y);
-		CreateTextTextures(lines.c_str(),LEVEL_RECT_X,LEVEL_RECT_Y+ 30);
-
 		g_Timer = SDL_GetTicks();
 	}
 }
@@ -529,16 +562,20 @@ void Game()
 // a message asking if the player really wants to quit.          //
 void Exit()
 {
+    /* Select the color for drawing. It is set to red here. */
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+
+    /* Clear the entire screen to our selected color. */
+    SDL_RenderClear(renderer);
+
+    CreateTextTextures("(Q)uit Game (Y or N)",100,150);
+
     quit = false;
 	// Here we compare the difference between the current time and the last time we //
 	// handled a frame. If FRAME_RATE amount of time has, it's time for a new frame. //
 	if ( (SDL_GetTicks() - g_Timer) >= FRAME_RATE )
 	{
 		HandleExitInput();
-
-        //ClearScreen(renderer);
-
-        CreateTextTextures("(Q)uit Game (Y or N)",100,150);
 
 		g_Timer = SDL_GetTicks();
 	}
@@ -547,14 +584,18 @@ void Exit()
 // Display a victory message. //
 void GameWon()
 {
+    /* Select the color for drawing. It is set to red here. */
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+
+    /* Clear the entire screen to our selected color. */
+    SDL_RenderClear(renderer);
+
+    CreateTextTextures("You Win!!!",100,120);
+	CreateTextTextures("(Q)uit Game (Y or N)",100,150);
+
 	if ( (SDL_GetTicks() - g_Timer) >= FRAME_RATE )
 	{
 		HandleWinLoseInput();
-
-		//ClearScreen(renderer);
-
-		CreateTextTextures("You Win!!!",100,120);
-		CreateTextTextures("(Q)uit Game (Y or N)",100,150);
 
 		g_Timer = SDL_GetTicks();
 	}
@@ -563,27 +604,31 @@ void GameWon()
 // Display a game over message. //
 void GameLost()
 {
+    /* Select the color for drawing. It is set to red here. */
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+
+    /* Clear the entire screen to our selected color. */
+    SDL_RenderClear(renderer);
+
+    SDL_Texture *img = NULL;
+    int w, h; // texture width & height
+    img = IMG_LoadTexture(renderer, "./data/FallingBlocks2.bmp");
+
+    if (img == NULL)
+        std::cout << "Couldn't load ./data/FallingBlocks2.bmp" << std::endl;
+
+    SDL_QueryTexture(img, NULL, NULL, &w, &h); // get the width and height of the texture
+    SDL_Rect texr; texr.x = 0; texr.y = 0; texr.w = w; texr.h = h;
+
+    // copy the texture to the rendering context
+    SDL_RenderCopy(renderer, img, NULL, &texr);
+
+    CreateTextTextures("You Lose.",100,120);
+    CreateTextTextures("(Q)uit Game (Y or N)",100,150);
+
 	if ( (SDL_GetTicks() - g_Timer) >= FRAME_RATE )
 	{
 		HandleWinLoseInput();
-
-		//ClearScreen(renderer);
-
-        SDL_Texture *img = NULL;
-        int w, h; // texture width & height
-        img = IMG_LoadTexture(renderer, "./data/FallingBlocks2.bmp");
-
-        if (img == NULL)
-            std::cout << "Couldn't load ./data/FallingBlocks2.bmp" << std::endl;
-
-        SDL_QueryTexture(img, NULL, NULL, &w, &h); // get the width and height of the texture
-        SDL_Rect texr; texr.x = 0; texr.y = 0; texr.w = w; texr.h = h;
-
-		// copy the texture to the rendering context
-		SDL_RenderCopy(renderer, img, NULL, &texr);
-
-		CreateTextTextures("You Lose.",100,120);
-		CreateTextTextures("(Q)uit Game (Y or N)",100,150);
 
         static int runonce = 0;
         if(runonce == 0)
@@ -596,44 +641,6 @@ void GameLost()
         }
 		g_Timer = SDL_GetTicks();
 	}
-}
-
-// This function draws the background //
-void DrawBackground()
-{
-	SDL_Rect source;
-
-	// Set our source rectangle to the current level's background //
-	switch (g_Level)
-	{
-	case 1:
-		{
-		SDL_Rect temp = { LEVEL_ONE_X, LEVEL_ONE_Y, WINDOW_WIDTH, WINDOW_HEIGHT };
-		source = temp;
-		} break;
-	case 2:
-		{
-		SDL_Rect temp = { LEVEL_TWO_X, LEVEL_TWO_Y, WINDOW_WIDTH, WINDOW_HEIGHT };
-		source = temp;
-		} break;
-	case 3:
-		{
-		SDL_Rect temp = { LEVEL_THREE_X, LEVEL_THREE_Y, WINDOW_WIDTH, WINDOW_HEIGHT };
-		source = temp;
-		} break;
-	case 4:
-		{
-		SDL_Rect temp = { LEVEL_FOUR_X, LEVEL_FOUR_Y, WINDOW_WIDTH, WINDOW_HEIGHT };
-		source = temp;
-		} break;
-	case 5:
-		{
-		SDL_Rect temp = { LEVEL_FIVE_X, LEVEL_FIVE_Y, WINDOW_WIDTH, WINDOW_HEIGHT };
-		source = temp;
-		} break;
-	}
-
-	//SDL_Rect destination = { 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT };
 }
 
 // This function receives player input and //
