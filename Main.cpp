@@ -60,6 +60,8 @@ int InitialSpeed;
 int SpeedChange;
 // SLIDE TIME
 int SlideTime;
+// HIGHSCORE
+int Highscore;
 
 std::vector<int> ConfigData;
 
@@ -205,6 +207,27 @@ void Init()
         cout << "Unable to open file";
     }
 
+    ifstream highscorefile ("highscore.ini");
+    if (highscorefile.is_open())
+    {
+        while ( getline (highscorefile,line) )
+        {
+            //the following line trims white space from the beginning of the string
+            line.erase(line.begin(), find_if(line.begin(), line.end(), not1(ptr_fun<int, int>(isspace))));
+
+
+            if(line[0] == '#') continue;
+            cout << line << '\n';
+            //ConfigData.push_back(atoi(line.c_str()));
+            Highscore = atoi(line.c_str());
+        }
+        highscorefile.close();
+    }
+    else
+    {
+        cout << "Unable to open file";
+    }
+
 	// Initiliaze SDL video and our timer //
 	if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO) != 0 )
 	{
@@ -216,6 +239,8 @@ void Init()
 	window = SDL_CreateWindow(WINDOW_CAPTION,
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
         WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL);
+
+
 
     // Loading and using a logo image for the application running
     SDL_Surface* LogoSurface = IMG_Load( "./assets/atari.png" );
@@ -328,7 +353,11 @@ void Init()
 
     Mix_Volume(-1, MIX_MAX_VOLUME/4);
 
-    renderer = SDL_CreateRenderer(window, -1, 0);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+    //Initialize PNG loading
+    int imgFlags = IMG_INIT_PNG;
+    if( !( IMG_Init( imgFlags ) & imgFlags ) ) { printf( "SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError() ); exit(1);}
 
     g_StateQueue.push_front("MAIN");
 
@@ -408,9 +437,34 @@ void Menu()
     /* Clear the entire screen to our selected color. */
     SDL_RenderClear(renderer);
 
+  //The final texture
+  /*
+  SDL_Texture* newTexture = NULL; //Load image at specified path
+  SDL_Surface* loadedSurface = IMG_Load( "./data/FallingBlocks2.bmp" ); if( loadedSurface == NULL ) { printf( "Unable to load image %s! SDL_image Error: %s\n", "./data/FallingBlocks2.bmp", IMG_GetError() ); }
+  else { //Create texture from surface pixels
+  newTexture = SDL_CreateTextureFromSurface( renderer, loadedSurface );
+  if( newTexture == NULL ) { printf( "Unable to create texture from %s! SDL Error: %s\n", "./data/FallingBlocks2.bmp", SDL_GetError() ); } //Get rid of old loaded surface
+  SDL_FreeSurface( loadedSurface ); }
+
+          SDL_QueryTexture(newTexture, NULL, NULL, &w, &h); // get the width and height of the texture
+        SDL_Rect texr; texr.x = 0; texr.y = 0; texr.w = w; texr.h = h;
+        SDL_RenderCopy(renderer, newTexture, NULL, &texr);
+
+    SDL_DestroyTexture( newTexture );
+*/
     SDL_Texture *img = NULL;
     int w, h; // texture width & height
     img = IMG_LoadTexture(renderer, "./data/FallingBlocks2.bmp");
+    SDL_Surface* loadedSurface = IMG_Load( "./data/FallingBlocks2.bmp" );
+     if( loadedSurface == NULL ) {
+     }
+     else
+     {
+        SDL_QueryTexture(img, NULL, NULL, &w, &h); // get the width and height of the texture
+        SDL_Rect texr; texr.x = 0; texr.y = 0; texr.w = w; texr.h = h;
+        SDL_RenderCopy(renderer, img, NULL, &texr);
+        SDL_FreeSurface( loadedSurface );
+     }
 
     if (img == NULL)
         std::cout << "Couldn't load ./data/FallingBlocks2.bmp" << std::endl;
@@ -420,6 +474,8 @@ void Menu()
 
     // copy the texture to the rendering context
     SDL_RenderCopy(renderer, img, NULL, &texr);
+
+    SDL_DestroyTexture( img );
 
     CreateTextTextures("Start (G)ame",100,120);
     CreateTextTextures("(Q)uit game",100,150);
@@ -460,28 +516,13 @@ void Game()
     // copy the texture to the rendering context
     SDL_RenderCopy(renderer, img, NULL, &texr);
 
-    if(GHOST_PIECE == 1)
-    {
-        SDL_Texture *block = NULL;
-        int blockWidth, blockHeight; // texture width & height
-        block = IMG_LoadTexture(renderer, "./data/block.bmp");
-
-        if (block == NULL)
-            std::cout << "Couldn't load ./data/block.bmp" << std::endl;
-
-        SDL_QueryTexture(block, NULL, NULL, &blockWidth, &blockHeight); // get the width and height of the texture
-        SDL_Rect BlockRect; BlockRect.x = 0; BlockRect.y = 0; BlockRect.w = blockWidth; BlockRect.h = blockHeight;
-
-        SDL_QueryTexture(block, NULL, NULL, &blockWidth, &blockHeight);
-
-        // copy the texture to the rendering context
-        SDL_RenderCopy(renderer, block, NULL, &BlockRect);
-    }
-
-
     // Draw the focus block and next block. BUG ERROR BLACK BACKGROUND//
     g_FocusBlock->Draw(g_Window,renderer);
-    g_NextBlock->Draw(g_Window,renderer);
+
+    if(GHOST_PIECE == 1)
+    {
+        g_NextBlock->Draw(g_Window,renderer);
+    }
 
     // Draw the old squares. //
     for (unsigned int i=0; i < g_OldSquares.size(); i++)
@@ -501,10 +542,16 @@ void Game()
     string lines = "Lines: ";
     lines.append( std::to_string(g_Lines) );
 
+    string highscoran = "Highscore: ";
+    highscoran.append( std::to_string(Highscore) );
+
+
     CreateTextTextures(nextscore.c_str(),NEEDED_SCORE_RECT_X,NEEDED_SCORE_RECT_Y);
     CreateTextTextures(score.c_str(),SCORE_RECT_X,SCORE_RECT_Y);
     CreateTextTextures(level.c_str(),LEVEL_RECT_X,LEVEL_RECT_Y);
     CreateTextTextures(lines.c_str(),LEVEL_RECT_X,LEVEL_RECT_Y+ 30);
+    CreateTextTextures(highscoran.c_str(),LEVEL_RECT_X,LEVEL_RECT_Y+ 60);
+
 
 	// Every frame we increase this value until it is equal to g_FocusBlockSpeed. //
 	// When it reaches that value, we force the focus block down. //
@@ -556,6 +603,7 @@ void Game()
 
 		g_Timer = SDL_GetTicks();
 	}
+	SDL_DestroyTexture(img);
 }
 
 // This function handles the game's exit screen. It will display //
@@ -622,6 +670,9 @@ void GameLost()
 
     // copy the texture to the rendering context
     SDL_RenderCopy(renderer, img, NULL, &texr);
+
+    SDL_DestroyTexture( img );
+
 
     CreateTextTextures("You Lose.",100,120);
     CreateTextTextures("(Q)uit Game (Y or N)",100,150);
@@ -1371,6 +1422,9 @@ void CreateTextTextures(std::string inText, int inX, int inY)
     SDL_RenderCopy( renderer, solidTexture, nullptr, &solidRect );
     //SDL_RenderCopy( renderer, blendedTexture, nullptr, &blendedRect );
     //SDL_RenderCopy( renderer, shadedTexture, nullptr, &shadedRect );
+    SDL_DestroyTexture(solidTexture);
+    SDL_DestroyTexture(blendedTexture);
+    SDL_DestroyTexture(shadedTexture);
 }
 
 // Convert an SDL_Surface to SDL_Texture.
@@ -1449,6 +1503,10 @@ void Option()
 
 		// copy the texture to the rendering context
 		SDL_RenderCopy(renderer, img, NULL, &texr);
+		SDL_DestroyTexture( img );
+
+
+
         int Music_Volume = Mix_VolumeMusic(-1);
         int SFX_Volume = Mix_Volume(-1,-1);
         CreateTextTextures("SOUND FX VOLUME",60,100);
