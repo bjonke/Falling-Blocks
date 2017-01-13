@@ -63,6 +63,13 @@ int SlideTime;
 // HIGHSCORE
 int Highscore;
 
+// BACKGROUND TEXTURE
+SDL_Texture* BgTexture;
+// BACKGROUND SURFACE
+SDL_Surface* BgSurface;
+// BACKGROUND RECTANGLE
+SDL_Rect BgRectangle;
+
 std::vector<int> ConfigData;
 
 std::stack<StateStruct> g_StateStack;        // Our state stack
@@ -174,6 +181,10 @@ int main(int argc, char **argv)
 
 	while(quit)
 	{
+	    /* Select the color for drawing. It is set to red here. */
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        /* Clear the entire screen to our selected color. */
+        SDL_RenderClear(renderer);
         g_StateStack.top().StatePointer();
         SDL_RenderPresent(renderer);
     }
@@ -348,7 +359,7 @@ void Init()
 	g_StateQueue.push_front("Menu");
 
 	// Initialize the true type font library //
-	//SetupTTF("./assets/fonts/replay.ttf");
+	//SetupTTF("./assets/foBgRectanglents/replay.ttf");
     //std::cout << TTF_GetError() << std::endl;
 
     Mix_Volume(-1, MIX_MAX_VOLUME/4);
@@ -431,51 +442,31 @@ void Shutdown()
 // the player can select to enter the game, or quit.     //
 void Menu()
 {
-    /* Select the color for drawing. It is set to red here. */
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    BgTexture = IMG_LoadTexture(renderer, "./data/FallingBlocks2.bmp");
+    BgSurface = IMG_Load( "./data/FallingBlocks2.bmp" );
 
-    /* Clear the entire screen to our selected color. */
-    SDL_RenderClear(renderer);
+    if( BgSurface == NULL )
+    {
+    }
+    else
+    {
+        SDL_QueryTexture(BgTexture, NULL, NULL, &BgRectangle.w, &BgRectangle.h); // get the width and height of the texture
+        BgRectangle.x = 0; BgRectangle.y = 0;
+        SDL_RenderCopy(renderer, BgTexture, NULL, &BgRectangle);
+        // Clean up memory or experience a memory leak
+        SDL_FreeSurface( BgSurface );
+    }
 
-  //The final texture
-  /*
-  SDL_Texture* newTexture = NULL; //Load image at specified path
-  SDL_Surface* loadedSurface = IMG_Load( "./data/FallingBlocks2.bmp" ); if( loadedSurface == NULL ) { printf( "Unable to load image %s! SDL_image Error: %s\n", "./data/FallingBlocks2.bmp", IMG_GetError() ); }
-  else { //Create texture from surface pixels
-  newTexture = SDL_CreateTextureFromSurface( renderer, loadedSurface );
-  if( newTexture == NULL ) { printf( "Unable to create texture from %s! SDL Error: %s\n", "./data/FallingBlocks2.bmp", SDL_GetError() ); } //Get rid of old loaded surface
-  SDL_FreeSurface( loadedSurface ); }
-
-          SDL_QueryTexture(newTexture, NULL, NULL, &w, &h); // get the width and height of the texture
-        SDL_Rect texr; texr.x = 0; texr.y = 0; texr.w = w; texr.h = h;
-        SDL_RenderCopy(renderer, newTexture, NULL, &texr);
-
-    SDL_DestroyTexture( newTexture );
-*/
-    SDL_Texture *img = NULL;
-    int w, h; // texture width & height
-    img = IMG_LoadTexture(renderer, "./data/FallingBlocks2.bmp");
-    SDL_Surface* loadedSurface = IMG_Load( "./data/FallingBlocks2.bmp" );
-     if( loadedSurface == NULL ) {
-     }
-     else
-     {
-        SDL_QueryTexture(img, NULL, NULL, &w, &h); // get the width and height of the texture
-        SDL_Rect texr; texr.x = 0; texr.y = 0; texr.w = w; texr.h = h;
-        SDL_RenderCopy(renderer, img, NULL, &texr);
-        SDL_FreeSurface( loadedSurface );
-     }
-
-    if (img == NULL)
+    if (BgTexture == NULL)
         std::cout << "Couldn't load ./data/FallingBlocks2.bmp" << std::endl;
 
-    SDL_QueryTexture(img, NULL, NULL, &w, &h); // get the width and height of the texture
-    SDL_Rect texr; texr.x = 0; texr.y = 0; texr.w = w; texr.h = h;
+    SDL_QueryTexture(BgTexture, NULL, NULL, &BgRectangle.w, &BgRectangle.h); // get the width and height of the texture
+    BgRectangle.x = 0; BgRectangle.y = 0;
 
     // copy the texture to the rendering context
-    SDL_RenderCopy(renderer, img, NULL, &texr);
+    SDL_RenderCopy(renderer, BgTexture, NULL, &BgRectangle);
 
-    SDL_DestroyTexture( img );
+    SDL_DestroyTexture( BgTexture );
 
     CreateTextTextures("Start (G)ame",100,120);
     CreateTextTextures("(Q)uit game",100,150);
@@ -497,24 +488,18 @@ void Menu()
 // drawing of the game as well as any necessary game logic. //
 void Game()
 {
-    /* Select the color for drawing. It is set to red here. */
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    BgTexture = IMG_LoadTexture(renderer, "./data/FallingBlocks2.bmp");
 
-    /* Clear the entire screen to our selected color. */
-    SDL_RenderClear(renderer);
-
-    SDL_Texture *img = NULL;
-    int w, h; // texture width & height
-    img = IMG_LoadTexture(renderer, "./data/FallingBlocks2.bmp");
-
-    if (img == NULL)
+    if (BgTexture == NULL)
+    {
         std::cout << "Couldn't load ./data/FallingBlocks2.bmp" << std::endl;
+    }
 
-    SDL_QueryTexture(img, NULL, NULL, &w, &h); // get the width and height of the texture
-    SDL_Rect texr; texr.x = 0; texr.y = 0; texr.w = w; texr.h = h;
+    SDL_QueryTexture(BgTexture, NULL, NULL, &BgRectangle.w, &BgRectangle.h); // get the width and height of the texture
+    BgRectangle.x = 0; BgRectangle.y = 0;
 
     // copy the texture to the rendering context
-    SDL_RenderCopy(renderer, img, NULL, &texr);
+    SDL_RenderCopy(renderer, BgTexture, NULL, &BgRectangle);
 
     // Draw the focus block and next block. BUG ERROR BLACK BACKGROUND//
     g_FocusBlock->Draw(g_Window,renderer);
@@ -545,13 +530,11 @@ void Game()
     string highscoran = "Highscore: ";
     highscoran.append( std::to_string(Highscore) );
 
-
     CreateTextTextures(nextscore.c_str(),NEEDED_SCORE_RECT_X,NEEDED_SCORE_RECT_Y);
     CreateTextTextures(score.c_str(),SCORE_RECT_X,SCORE_RECT_Y);
     CreateTextTextures(level.c_str(),LEVEL_RECT_X,LEVEL_RECT_Y);
     CreateTextTextures(lines.c_str(),LEVEL_RECT_X,LEVEL_RECT_Y+ 30);
     CreateTextTextures(highscoran.c_str(),LEVEL_RECT_X,LEVEL_RECT_Y+ 60);
-
 
 	// Every frame we increase this value until it is equal to g_FocusBlockSpeed. //
 	// When it reaches that value, we force the focus block down. //
@@ -566,8 +549,6 @@ void Game()
 	// handled a frame. If FRAME_RATE amount of time has, it's time for a new frame. //
 	if ( (SDL_GetTicks() - g_Timer) >= FRAME_RATE )
 	{
-        //ClearScreen(renderer);
-
 		HandleGameInput();
 
 		force_down_counter++;
@@ -603,19 +584,13 @@ void Game()
 
 		g_Timer = SDL_GetTicks();
 	}
-	SDL_DestroyTexture(img);
+	SDL_DestroyTexture(BgTexture);
 }
 
 // This function handles the game's exit screen. It will display //
 // a message asking if the player really wants to quit.          //
 void Exit()
 {
-    /* Select the color for drawing. It is set to red here. */
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-
-    /* Clear the entire screen to our selected color. */
-    SDL_RenderClear(renderer);
-
     CreateTextTextures("(Q)uit Game (Y or N)",100,150);
 
     quit = false;
@@ -632,12 +607,6 @@ void Exit()
 // Display a victory message. //
 void GameWon()
 {
-    /* Select the color for drawing. It is set to red here. */
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-
-    /* Clear the entire screen to our selected color. */
-    SDL_RenderClear(renderer);
-
     CreateTextTextures("You Win!!!",100,120);
 	CreateTextTextures("(Q)uit Game (Y or N)",100,150);
 
@@ -652,26 +621,20 @@ void GameWon()
 // Display a game over message. //
 void GameLost()
 {
-    /* Select the color for drawing. It is set to red here. */
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    BgTexture = IMG_LoadTexture(renderer, "./data/FallingBlocks2.bmp");
 
-    /* Clear the entire screen to our selected color. */
-    SDL_RenderClear(renderer);
-
-    SDL_Texture *img = NULL;
-    int w, h; // texture width & height
-    img = IMG_LoadTexture(renderer, "./data/FallingBlocks2.bmp");
-
-    if (img == NULL)
+    if (BgTexture == NULL)
+    {
         std::cout << "Couldn't load ./data/FallingBlocks2.bmp" << std::endl;
+    }
 
-    SDL_QueryTexture(img, NULL, NULL, &w, &h); // get the width and height of the texture
-    SDL_Rect texr; texr.x = 0; texr.y = 0; texr.w = w; texr.h = h;
+    SDL_QueryTexture(BgTexture, NULL, NULL, &BgRectangle.w, &BgRectangle.h); // get the width and height of the texture
+    BgRectangle.x = 0; BgRectangle.y = 0;
 
     // copy the texture to the rendering context
-    SDL_RenderCopy(renderer, img, NULL, &texr);
+    SDL_RenderCopy(renderer, BgTexture, NULL, &BgRectangle);
 
-    SDL_DestroyTexture( img );
+    SDL_DestroyTexture( BgTexture );
 
 
     CreateTextTextures("You Lose.",100,120);
@@ -1198,7 +1161,8 @@ void HandleBottomCollision()
         // increase player's number of lines
         g_Lines += num_lines;
 		// Increase player's score according to number of lines completed //
-		g_Score += POINTS_PER_LINE * num_lines;
+		//g_Score += POINTS_PER_LINE * num_lines;
+		g_Score += (g_Level * POINTS_PER_LINE) * num_lines;
 
 		// Check to see if it's time for a new level //
 		if (g_Score >= g_Level * POINTS_PER_LEVEL)
@@ -1212,7 +1176,6 @@ void HandleBottomCollision()
 			g_FocusBlockSpeed -= SPEED_CHANGE; // shorten the focus blocks movement interval
 		}
 	}
-
 	// Now would be a good time to check to see if the player has lost //
 	CheckLoss();
 }
@@ -1319,7 +1282,6 @@ int CheckCompletedLines()
 // Every turn
 void CheckWin()
 {
-    std::cout << "CheckWin" << std::endl;
 	// If current level is greater than number of levels, player has won //
 	if (g_Level > NUM_LEVELS)
 	{
@@ -1381,17 +1343,6 @@ void ClearAllStates()
 		{
 			g_StateStack.pop();
 		}
-}
-
-void Debugger()
-{
-    std::cout << "Debugging stuff" << std::endl;
-    std::cout << "---------------" << std::endl;
-    std::cout << "g_Level: " << g_Level << std::endl;
-    std::cout << "g_Score: " << g_Score << std::endl;
-    for(auto it = g_StateQueue.begin(); it != g_StateQueue.end(); it++){
-        std::cout << *(it) << std::endl;
-    }
 }
 
 void CreateTextTextures(std::string inText, int inX, int inY)
@@ -1489,22 +1440,21 @@ void Option()
 		// We start by calling our input function
 		HandleOptionInput();
 
-        SDL_Texture *img = NULL;
+        //SDL_Texture *img = NULL;
         int w, h; // texture width & height
-        img = IMG_LoadTexture(renderer, "./data/FallingBlocks2.bmp");
+        BgTexture = IMG_LoadTexture(renderer, "./data/FallingBlocks2.bmp");
 
-        if (img == NULL)
+        if (BgTexture == NULL)
         {
             std::cout << "Couldn't load ./data/FallingBlocks2.bmp" << std::endl;
         }
 
-        SDL_QueryTexture(img, NULL, NULL, &w, &h); // get the width and height of the texture
-        SDL_Rect texr; texr.x = 0; texr.y = 0; texr.w = w; texr.h = h;
+        SDL_QueryTexture(BgTexture, NULL, NULL, &w, &h); // get the width and height of the texture
+        BgRectangle.x = 0; BgRectangle.y = 0; BgRectangle.w = w; BgRectangle.h = h;
 
 		// copy the texture to the rendering context
-		SDL_RenderCopy(renderer, img, NULL, &texr);
-		SDL_DestroyTexture( img );
-
+		SDL_RenderCopy(renderer, BgTexture, NULL, &BgRectangle);
+		SDL_DestroyTexture( BgTexture );
 
 
         int Music_Volume = Mix_VolumeMusic(-1);
@@ -1541,3 +1491,28 @@ bool SetupTTF( const std::string &fontName, int fontSize)
     }
     return true;
 }
+
+void Debugger()
+{
+    std::cout << "Debugging stuff" << std::endl;
+    std::cout << "---------------" << std::endl;
+    std::cout << "g_Level: " << g_Level << std::endl;
+    std::cout << "g_Score: " << g_Score << std::endl;
+    for(auto it = g_StateQueue.begin(); it != g_StateQueue.end(); it++){
+        std::cout << *(it) << std::endl;
+    }
+}
+
+//Original Nintendo Scoring System Edit
+
+//This SCORE was used in Nintendo's versions of Tetris for NES, for Game Boy, and for Super NES.
+// Level 	Points for 1 line 	Points for 2 lines 	Points for 3 lines 	Points for 4 lines
+// 0 	    40 	                100 	            300 	            1200
+// 1 	    80 	                200 	            600 	            2400
+// 2 	    120 	            300 	            900 	            3600
+// ...
+// 9 	    400 	            1000 	            3000 	            12000
+// n 	40 * (n + 1) 	100 * (n + 1) 	300 * (n + 1) 	1200 * (n + 1)
+
+//For each piece, the game also awards the number of points equal to the number of grid spaces that the player has continuously soft dropped the piece.
+//Unlike the points for lines, this does not increase per level.
