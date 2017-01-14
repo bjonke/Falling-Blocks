@@ -608,7 +608,8 @@ void Exit()
 void GameWon()
 {
     CreateTextTextures("You Win!!!",100,120);
-	CreateTextTextures("(Q)uit Game (Y or N)",100,150);
+	CreateTextTextures("Quit Game",100,150);
+	CreateTextTextures("( Y or N )",100,180);
 
 	if ( (SDL_GetTicks() - g_Timer) >= FRAME_RATE )
 	{
@@ -638,7 +639,8 @@ void GameLost()
 
 
     CreateTextTextures("You Lose.",100,120);
-    CreateTextTextures("(Q)uit Game (Y or N)",100,150);
+    CreateTextTextures("Quit Game",100,150);
+    CreateTextTextures("( Y or N )",100,180);
 
 	if ( (SDL_GetTicks() - g_Timer) >= FRAME_RATE )
 	{
@@ -1347,7 +1349,7 @@ void ClearAllStates()
 
 void CreateTextTextures(std::string inText, int inX, int inY)
 {
-    SDL_Color textColor  = { 255, 255, 255};   // text color
+    SDL_Color textColor  = { 0, 255, 0};   // text color
     SDL_Color backgroundColor  = { 0, 0, 0};   // text color
     SDL_Surface* solid = TTF_RenderText_Solid( font, inText.c_str(), textColor );
     solidTexture = SurfaceToTexture( solid );
@@ -1360,19 +1362,19 @@ void CreateTextTextures(std::string inText, int inX, int inY)
     blendedTexture = SurfaceToTexture( blended );
 
     SDL_QueryTexture( blendedTexture, NULL, NULL, &blendedRect.w, &blendedRect.h );
-    blendedRect.x = 0;
-    blendedRect.y = solidRect.y + solidRect.h +  20;
+    blendedRect.x = inX;
+    blendedRect.y = inY;
 
     SDL_Surface* shaded = TTF_RenderText_Shaded( font, inText.c_str(), textColor, backgroundColor );
     shadedTexture = SurfaceToTexture( shaded );
 
     SDL_QueryTexture( shadedTexture , NULL, NULL, &shadedRect.w, &shadedRect.h );
-    shadedRect.x = 0;
-    shadedRect.y = blendedRect.y + blendedRect.h + 20;
+    shadedRect.x = inX;
+    shadedRect.y = inY;
 
-    SDL_RenderCopy( renderer, solidTexture, nullptr, &solidRect );
+    //SDL_RenderCopy( renderer, solidTexture, nullptr, &solidRect );
     //SDL_RenderCopy( renderer, blendedTexture, nullptr, &blendedRect );
-    //SDL_RenderCopy( renderer, shadedTexture, nullptr, &shadedRect );
+    SDL_RenderCopy( renderer, shadedTexture, nullptr, &shadedRect );
     SDL_DestroyTexture(solidTexture);
     SDL_DestroyTexture(blendedTexture);
     SDL_DestroyTexture(shadedTexture);
